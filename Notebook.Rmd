@@ -1,7 +1,10 @@
 ---
 title: "Medicare 2015 Notes"
 author: "Abhijit Dasgupta"
-output: html_notebook
+output: 
+  html_notebook:
+    includes:
+      in_header: header.html
 ---
 
 
@@ -21,5 +24,40 @@ for the variability. This study attempts to incorporate many of the confounders 
 account for the observed variability adequately. These confounders include comorbidities (affects the
 risk of getting a replacement), healthcare utiliization variables (do people differ in going to the
 doctor due to differences in access or attitudes), and physician attitudes (captured by % with Medicare
-Avantage HMO, which can have spillover attitudinal effects on doctors, and availability of 
+Avantage HMO, which can have spillover attitudinal effects on doctors[^1], and availability of 
 orthopedic surgeons).
+
+The most common reason for knee replacement is osteoarthritis (OA) of the knee, which is a repeated
+use degenerative disorder, so the incidence of OA can be related to occupation. This should be 
+captured in the `physjob_t_wtperc` variable at least at the region level.
+
+# Data
+The individual level identifier is `bene_id`. There are 20 comorbidities captured each year of a patient's
+participation in the study. Person-years exposed is captured in the `Personyrs` variable. 
+
++ Region ids `hrr` have 306 unique values, but are not sequential
++ Once a patient reaches 2 replacements (either 1+1 or 2), they should have 0 replacements in the 
+following years, since we're only looking at primary replacements and not revisions. 
++ `poor` is defined as also being on Medicaid
+
+# Code
+
+We'll start developing models on a subset of the data, say on 1M subjects. This is to ensure that
+we can iterate on code quickly without waiting 2 days for code to run. To do this, Mike suggests using
+`PROC SURVEYSELECT`
+
+```sas
+proc surveyselect data=sh026544.project4_hrr_end15 out=sh026544.project4_hrr_end15_sampled 
+    noprint method=srs sampsize = 1000000 seed=3589;
+  cluster bene_id;
+  run;
+```
+
+
+
+
+
+[^1]: Doctors who have a lot of patients in Medicare Advantange, which is a managed care HMO, tend to
+be influenced by that culture which promotes lower cost treatments. This attitude often can spill over
+to the fee-for-service general Medicare population, which would then tend to get more conservative,
+lower cost treatment. 
