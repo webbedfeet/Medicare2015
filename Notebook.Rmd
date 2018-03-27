@@ -1,0 +1,25 @@
+---
+title: "Medicare 2015 Notes"
+author: "Abhijit Dasgupta"
+output: html_notebook
+---
+
+
+# Introduction
+
+This study seeks to understand why rates of primary knee replacements vary across geographical 
+regions. There are 306 geographical regions in this study, with the rate of knee replacement varying
+from 4/1000 to 14/1000. This study covers the years 2011-2015, for a total of 147M records (about 35M 
+patients), with one record per person-year. 
+
+Earlier studies have attempted to look at this data standardized for age, sex, and race, and 
+have still found variability in the incidence rates. The tacit assumption that was made in earlier 
+studies is that the rate of osteoarthritis (OA) of the knee is uniform across the country. 
+
+The obvious criticism of earlier findings is that there are unmeasured confounders that would account
+for the variability. This study attempts to incorporate many of the confounders to see if they can
+account for the observed variability adequately. These confounders include comorbidities (affects the
+risk of getting a replacement), healthcare utiliization variables (do people differ in going to the
+doctor due to differences in access or attitudes), and physician attitudes (captured by % with Medicare
+Avantage HMO, which can have spillover attitudinal effects on doctors, and availability of 
+orthopedic surgeons).
