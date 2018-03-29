@@ -3,6 +3,7 @@ title: "Medicare 2015 Notes"
 author: "Abhijit Dasgupta"
 output: 
   html_notebook:
+    highlight: tango
     includes:
       in_header: header.html
     number_sections: yes
@@ -121,16 +122,32 @@ print(plt)
 ```
 
 
-I've been thinking that a better first analysis is to look at the rate of primary replacement with
-covariates. This can avoid the issue having correlated binary outcomes without sufficient information
-to analyze it. A potential twist would be to include a covariate whether other leg was already replaced,
-which would be a modifier for the risk of replacement. If bilateral replacement happens, it is still 
-just counted once as a replacement event; a secondary analysis can be done whether bilateral replacements
-are more likely under certain person/environment combinations. 
+~~I've been thinking that a better first analysis is to look at the rate of primary replacement with covariates. This can avoid the issue having correlated binary outcomes without sufficient information to analyze it. A potential twist would be to include a covariate whether other leg was already replaced, which would be a modifier for the risk of replacement. If bilateral replacement happens, it is still just counted once as a replacement event; a secondary analysis can be done whether bilateral replacements are more likely under certain person/environment combinations.~~
 
 The workhorse for this analysis will be `PROC GLIMMIX`, or potentially `PROC GENMOD` if we go towards
 GEE analysis. However, for having multilevel covariates, `GLIMMIX` might be the better option. 
+GLIMMIX will allow for the multilevel modeling using nested random effects, under either a Poisson or 
+negative binomial model. The ultimate goal is to use this to find the predicted rate of knee replacements
+by region under this model, and how much that varies across regions. This should show up as a 
+variance component in the model, or a combination of variance components. 
 
+## Models
+
+### Poisson regression
+
+See [link1](http://www.misug.org/uploads/8/1/9/1/8191072/kwelch_clustered_longitudinal_analysis.pdf) and
+[link2](https://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_glimmix_sect026.htm)
+
+The general framework of this model is:
+
+```sas
+proc glimmix data = sh026544.project4_hrr_end15 method = quad;
+  
+  class year bene_id hrr ... ;
+  model y = ... / link = log s dist = poisson offset = lexposure;
+  random hrr;
+  random int / subject = bene_id(hrr);
+```
 
 
 [^1]: Doctors who have a lot of patients in Medicare Advantange, which is a managed care HMO, tend to
