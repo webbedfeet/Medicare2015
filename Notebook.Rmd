@@ -5,7 +5,13 @@ output:
   html_notebook:
     includes:
       in_header: header.html
+    number_sections: yes
+    theme: journal
 ---
+
+```{r setup, warning=FALSE, message = FALSE, include = FALSE}
+library(tidyverse)
+```
 
 
 # Introduction
@@ -57,9 +63,63 @@ proc surveyselect data=sh026544.project4_hrr_end15 out=sh026544.project4_hrr_end
 
 ### Analysis
 
-I feel that the outcome measure is really distributed as Bin(2,p), rather than a Poisson. In fact, 
-theory would suggest that the Poisson would not be a good approximation to the Binomial in this case,
-so I'd be reluctant to use a Poisson model on this. 
+~~I feel that the outcome measure is really distributed as Bin(2,p), rather than a Poisson. In fact,~~ 
+~~theory would suggest that the Poisson would not be a good approximation to the Binomial in this case,~~
+~~so I'd be reluctant to use a Poisson model on this.~~
+
+Empirically, the rates of getting knee replacements range from 0.04 to 0.14. If we keep this range
+of rates, and do a quick simulation based on a logistic model, we see that the Poisson approximation 
+works quite well, specially with regards to the predicted values (i.e., the rate $\lambda$ of getting a 
+replacement as compared to the probability of not getting a replacement; 
+$$ 1-p(x) \equiv \exp (-\lambda (x))$$
+
+```{r}
+set.seed(201205)
+X = matrix(rbinom( 10000*10, 1, 0.2), ncol=10)
+X = cbind(V0 = 1, X)
+beta = matrix(rnorm(11), ncol=1)
+beta[1] = -3
+linpred = X%*%beta
+Y = rbinom(10000, 1, plogis(linpred))
+d = as.data.frame(X)
+d$Y = Y
+d = select(d, -V0)
+m1 = glm(Y~., data = d, family = binomial)
+m2 = glm(Y~., data=d, family = poisson)
+
+p1 <- predict(m1, type = 'response') # p
+l <- predict(m2, type = 'response') # lambda
+d <- tibble(p1, l)
+plt <- ggplot(d, aes(1-p1,exp(-l)))+geom_point()+geom_abline()+
+  labs(x='P(Y=0) under logistic', y = 'P(Y=0) under Poisson')
+print(plt)
+```
+
+Even if we model the outcomes as a true Binomial where outcomes can be 0, 1, or 2, the Poisson model actually
+gets the predictions pretty well. 
+
+```{r}
+set.seed(201205)
+X = matrix(rbinom( 10000*10, 1, 0.2), ncol = 10)
+X = cbind(V0 = 1, X)
+beta = matrix(rnorm(11), ncol = 1)
+beta[1] = -3
+linpred = X %*% beta
+Y = rbinom(10000, 2, plogis(linpred))
+d = as.data.frame(X)
+d$Y = Y
+d = select(d, -V0)
+m1 = glm(Y/2~., data = d, family = binomial, weights = rep(2, nrow(d)))
+m2 = glm(Y~., data = d, family = poisson)
+
+p1 <- predict(m1, type = 'response') # p
+l <- predict(m2, type = 'response') # lambda
+d <- tibble(p1, l)
+plt <- ggplot(d, aes((1-p1)^2,exp(-l)))+geom_point() + geom_abline() + 
+  labs(x = 'P(Y=0) under logistic', y = 'P(Y=0) under Poisson')
+print(plt)
+```
+
 
 I've been thinking that a better first analysis is to look at the rate of primary replacement with
 covariates. This can avoid the issue having correlated binary outcomes without sufficient information
@@ -70,6 +130,7 @@ are more likely under certain person/environment combinations.
 
 The workhorse for this analysis will be `PROC GLIMMIX`, or potentially `PROC GENMOD` if we go towards
 GEE analysis. However, for having multilevel covariates, `GLIMMIX` might be the better option. 
+
 
 
 [^1]: Doctors who have a lot of patients in Medicare Advantange, which is a managed care HMO, tend to
