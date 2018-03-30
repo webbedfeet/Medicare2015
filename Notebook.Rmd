@@ -6,7 +6,7 @@ output:
     highlight: tango
     includes:
       in_header: header.html
-    number_sections: yes
+    number_sections: no
     theme: journal
 ---
 
@@ -148,6 +148,27 @@ proc glimmix data = sh026544.project4_hrr_end15 method = quad;
   random hrr;
   random int / subject = bene_id(hrr);
 ```
+
+#### Model 1: Age, sex and race
+
+We would like to fit a model that captures the nonlinear effect of age using splines, rather than 
+using categorical variables. 
+
+```sas
+data sh026544.project4_hrr_end15_small;
+  set sh026544.project4_hrr_end15_small;
+  ltime = log(personyrs);
+  run;
+proc glimmix data = sh026544.project4_hrr_end15_small;
+  class Male Race;
+  effect age_spl = spline(Age_at_end_ref_yr);
+  model Tka = age_spl|Male|Race@2 / dist = poisson solution offset = ltime ;
+  random hrr/ solution;
+  random  intercept/ solution subject = bene_id(hrr);
+  output out = mod1_out pred = p1_pred;
+  run;
+```
+
 
 
 [^1]: Doctors who have a lot of patients in Medicare Advantange, which is a managed care HMO, tend to
