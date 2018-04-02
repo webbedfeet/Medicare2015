@@ -117,7 +117,7 @@ print(plt)
 Even if we model the outcomes as a true Binomial where outcomes can be 0, 1, or 2, the Poisson model actually
 gets the predictions pretty well. 
 
-```{r}
+```{r, out.width='75%'}
 set.seed(201205)
 X = matrix(rbinom( 10000*10, 1, 0.2), ncol = 10)
 X = cbind(V0 = 1, X)
@@ -134,9 +134,9 @@ m2 = glm(Y~., data = d, family = poisson)
 p1 <- predict(m1, type = 'response') # p
 l <- predict(m2, type = 'response') # lambda
 d <- tibble(p1, l)
-plt <- ggplot(d, aes((1-p1)^2,exp(-l)))+geom_point() + geom_abline() + 
+ggplot(d, aes((1-p1)^2,exp(-l)))+geom_point() + geom_abline() + 
   labs(x = 'P(Y=0) under logistic', y = 'P(Y=0) under Poisson')
-print(plt)
+
 ```
 
 
@@ -172,6 +172,11 @@ proc glimmix data = sh026544.project4_hrr_end15 method = quad;
 We would like to fit a model that captures the nonlinear effect of age using splines, rather than 
 using categorical variables. 
 
+> Information about splines in SAS are [here](http://support.sas.com/documentation/cdl/en/statug/68162/HTML/default/viewer.htm#statug_introcom_sect020.htm)
+>
+
+High memory tricks are [here](http://support.sas.com/kb/37/047.html)
+Resources: [link](http://www.okstate.edu/sas/v8/sashtml/os2/zatalibs.htm), 
 ```sas
 data sh026544.project4_hrr_end15_small;
   set sh026544.project4_hrr_end15_small;
@@ -186,6 +191,7 @@ proc glimmix data = sh026544.project4_hrr_end15_small;
   output out = mod1_out pred = p1_pred;
   run;
 ```
+
 
 
 
