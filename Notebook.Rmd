@@ -54,6 +54,24 @@ proc surveyselect data=sh026544.project4_hrr_end15 out=sh026544.project4_hrr_end
   cluster bene_id;
   run;
 ```
+It turns out this code breaks due to "insufficient memory". I figured out a more efficient way
+using `PROC SQL`:
+
+```sas
+proc sql noprint;
+  create table sh026544.tmp_id as 
+    select distinct bene_id from sh0256544.project4_hrr_end15;
+
+proc surveyselect data=sh026544.tmp_id out = sh026544.tmp_sampled_id method = srs seed=745278 sampsize=500000 noprint;
+run;
+
+proc sql noprint;
+  create table sh026544.proj4_hrr_end15_sample as
+    select A.*, B.* from
+      sh026544.tmp_sampled_id A left join sh026544.project4_hrr_end15 B
+        on A.bene_id=B.bene_id
+          order by bene_id, bene_enrollmt_ref_yr;
+```
 
 ### Analysis
 
