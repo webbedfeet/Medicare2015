@@ -3,9 +3,16 @@ title: "Medicare 2015 Notes"
 author: "Abhijit Dasgupta"
 output: 
   html_notebook:
+    highlight: tango
     includes:
       in_header: header.html
+    number_sections: no
+    theme: journal
 ---
+
+```{r setup, warning=FALSE, message = FALSE, include = FALSE}
+library(tidyverse)
+```
 
 
 # Introduction
@@ -75,19 +82,111 @@ proc sql noprint;
 
 ### Analysis
 
-I feel that the outcome measure is really distributed as Bin(2,p), rather than a Poisson. In fact, 
-theory would suggest that the Poisson would not be a good approximation to the Binomial in this case,
-so I'd be reluctant to use a Poisson model on this. 
+~~I feel that the outcome measure is really distributed as Bin(2,p), rather than a Poisson. In fact,~~ 
+~~theory would suggest that the Poisson would not be a good approximation to the Binomial in this case,~~
+~~so I'd be reluctant to use a Poisson model on this.~~
 
-I've been thinking that a better first analysis is to look at the rate of primary replacement with
-covariates. This can avoid the issue having correlated binary outcomes without sufficient information
-to analyze it. A potential twist would be to include a covariate whether other leg was already replaced,
-which would be a modifier for the risk of replacement. If bilateral replacement happens, it is still 
-just counted once as a replacement event; a secondary analysis can be done whether bilateral replacements
-are more likely under certain person/environment combinations. 
+Empirically, the rates of getting knee replacements range from 0.04 to 0.14. If we keep this range
+of rates, and do a quick simulation based on a logistic model, we see that the Poisson approximation 
+works quite well, specially with regards to the predicted values (i.e., the rate $\lambda$ of getting a 
+replacement as compared to the probability of not getting a replacement; 
+$$ 1-p(x) \equiv \exp (-\lambda (x))$$
+
+```{r}
+set.seed(201205)
+X = matrix(rbinom( 10000*10, 1, 0.2), ncol=10)
+X = cbind(V0 = 1, X)
+beta = matrix(rnorm(11), ncol=1)
+beta[1] = -3
+linpred = X%*%beta
+Y = rbinom(10000, 1, plogis(linpred))
+d = as.data.frame(X)
+d$Y = Y
+d = select(d, -V0)
+m1 = glm(Y~., data = d, family = binomial)
+m2 = glm(Y~., data=d, family = poisson)
+
+p1 <- predict(m1, type = 'response') # p
+l <- predict(m2, type = 'response') # lambda
+d <- tibble(p1, l)
+plt <- ggplot(d, aes(1-p1,exp(-l)))+geom_point()+geom_abline()+
+  labs(x='P(Y=0) under logistic', y = 'P(Y=0) under Poisson')
+print(plt)
+```
+
+Even if we model the outcomes as a true Binomial where outcomes can be 0, 1, or 2, the Poisson model actually
+gets the predictions pretty well. 
+
+```{r}
+set.seed(201205)
+X = matrix(rbinom( 10000*10, 1, 0.2), ncol = 10)
+X = cbind(V0 = 1, X)
+beta = matrix(rnorm(11), ncol = 1)
+beta[1] = -3
+linpred = X %*% beta
+Y = rbinom(10000, 2, plogis(linpred))
+d = as.data.frame(X)
+d$Y = Y
+d = select(d, -V0)
+m1 = glm(Y/2~., data = d, family = binomial, weights = rep(2, nrow(d)))
+m2 = glm(Y~., data = d, family = poisson)
+
+p1 <- predict(m1, type = 'response') # p
+l <- predict(m2, type = 'response') # lambda
+d <- tibble(p1, l)
+plt <- ggplot(d, aes((1-p1)^2,exp(-l)))+geom_point() + geom_abline() + 
+  labs(x = 'P(Y=0) under logistic', y = 'P(Y=0) under Poisson')
+print(plt)
+```
+
+
+~~I've been thinking that a better first analysis is to look at the rate of primary replacement with covariates. This can avoid the issue having correlated binary outcomes without sufficient information to analyze it. A potential twist would be to include a covariate whether other leg was already replaced, which would be a modifier for the risk of replacement. If bilateral replacement happens, it is still just counted once as a replacement event; a secondary analysis can be done whether bilateral replacements are more likely under certain person/environment combinations.~~
 
 The workhorse for this analysis will be `PROC GLIMMIX`, or potentially `PROC GENMOD` if we go towards
 GEE analysis. However, for having multilevel covariates, `GLIMMIX` might be the better option. 
+GLIMMIX will allow for the multilevel modeling using nested random effects, under either a Poisson or 
+negative binomial model. The ultimate goal is to use this to find the predicted rate of knee replacements
+by region under this model, and how much that varies across regions. This should show up as a 
+variance component in the model, or a combination of variance components. 
+
+## Models
+
+### Poisson regression
+
+See [link1](http://www.misug.org/uploads/8/1/9/1/8191072/kwelch_clustered_longitudinal_analysis.pdf) and
+[link2](https://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_glimmix_sect026.htm)
+
+The general framework of this model is:
+
+```sas
+proc glimmix data = sh026544.project4_hrr_end15 method = quad;
+  
+  class year bene_id hrr ... ;
+  model y = ... / link = log s dist = poisson offset = lexposure;
+  random hrr;
+  random int / subject = bene_id(hrr);
+```
+
+#### Model 1: Age, sex and race
+
+We would like to fit a model that captures the nonlinear effect of age using splines, rather than 
+using categorical variables. 
+
+```sas
+data sh026544.project4_hrr_end15_small;
+  set sh026544.project4_hrr_end15_small;
+  ltime = log(personyrs);
+  run;
+proc glimmix data = sh026544.project4_hrr_end15_small;
+  class Male Race;
+  effect age_spl = spline(Age_at_end_ref_yr);
+  model Tka = age_spl|Male|Race@2 / dist = poisson solution offset = ltime ;
+  random hrr/ solution;
+  random  intercept/ solution subject = bene_id(hrr);
+  output out = mod1_out pred = p1_pred;
+  run;
+```
+
 
 
 [^1]: Doctors who have a lot of patients in Medicare Advantange, which is a managed care HMO, tend to
