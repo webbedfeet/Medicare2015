@@ -236,3 +236,13 @@ characteristics
 We're also interested in the nature of patient groups after adjusting for covariates, so that we can characterize the differences between extreme groups (differentiate between regions with high rates and regions with low rates)
 
 What sorts of patients make up excess or deficit compared to the mean expected region. For example if there is excess, are they mainly younger/sicker or older/healthier. 
+
+## Flow of consciousness (2019-02-14)
+
+1. Do we need to nest patient within HRR? Can HRR just be a covariate for the patient data, 
+and you just use the HRR-averaged predicted rate?
+1. Poisson can model the effects, but the rates may differ whether we have naive patients (no prior replacements) or experienced patients (1 prior replacement). This might need to be modeled. One can think that a patient with one prior replacement will be less resistant to a second, and the doctor may also be less resistant.
+1. Does time clock stop at 2nd replacement?
+1. Are any of our predictors time-dependent?
+1. Is there really an effect beyond natural variation? Looking at some posts on small area estimation and funnel plots, and it might be worthwhile to see if what we're seeing is just Poisson variation, and we really don't need to explain anything.  We could look at relationship with person-years followed or number of knee visits. 
+
