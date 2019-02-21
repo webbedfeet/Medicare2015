@@ -1,7 +1,7 @@
 library(tidyverse)
 library(broom)
 set.seed(2085)
-N <- 100000
+N <- 1000000
 Age <- rnorm(N, 75, 5)
 Sex <- sample(c("M","F"), N, replace=T, prob = c(0.45, 0.55))
 Race <- sample(c("White", "Black", "Hispanic", "Asian", "Other"), N, replace = T,
