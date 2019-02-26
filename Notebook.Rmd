@@ -217,7 +217,7 @@ lower cost treatment.
 
 ## A refresher of the project
 
-We have the incidence of knee replacements in 306 regions in the US (`hrr`). The
+We have the incidence of knee replacements in 306 regions in the US (`hrr`). The 
 main interest is in the variability in the incidence of knee replacements across regions. We are interested in whether the differences are due to:
 
 1. demographics
