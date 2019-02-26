@@ -183,3 +183,12 @@ plts[[3]]
 #' and sex, while if there was some extraneous factor affecting the rate,
 #'  we would see  poor agreement with the predicted rate, since the
 #'  adjustment isn't accounting for an unmeasured factor.
+#'
+#' # The fuller model
+#'
+#' The underlying conceptual model that Mike proposes is
+#'
+#' ```
+#' rate = [patient characteristics] + [physician characteristics] + [behavioral characteristics] + error
+#' ```
+#'
