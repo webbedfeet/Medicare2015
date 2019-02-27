@@ -8,6 +8,7 @@
 #'         toc_float: true
 #'         theme: journal
 #'         highlight: zenburn
+#'         keep_md: true
 #' ---
 #'
 #' # Background
@@ -106,7 +107,7 @@ dat %>% group_by(Region) %>% summarize(p_hat = mean(outcome)) %>%
 #' Poission could have been used just as easily given the low baseline rate),
 #' adjusting for age, race and sex. We also did nested models with just age, and with
 #' age and sex as well. We'll concentrate on the full model, since it makes the point
-#+ models, include = F
+#+ models, include = F, cache = TRUE
 m1 <- glm(outcome~Age,  data=dat, family = 'binomial')
 m2 <- update(m1, . ~ . + Sex)
 m3 <- update(m2, . ~ . + Race)
