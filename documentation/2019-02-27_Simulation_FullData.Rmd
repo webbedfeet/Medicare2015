@@ -6,9 +6,11 @@ output:
   html_document:
     toc: true
     #toc_float: true
-    theme: journal
+    theme: united
     highlight: zenburn
     md_extensions: +definition_lists
+pandoc_args: [
+"--syntax-definition","/Users/abhijit/NIAMS/Ward/Medicare2015/documentation/sas.xml"]
 ---
 
 # Data description
@@ -55,6 +57,12 @@ rate = [patient characteristics] + [physician characteristics] + [behavioral cha
 The part we're interested here is in the physician characteristics, with the
 behavioral characteristics being nuisance, in some sense. 
 
+```sas
+proc genmod data = test;
+model y = x1 x2;
+run;
+```
+
 
 ### Biology and patient characteristics
 
@@ -93,9 +101,9 @@ behavioral characteristics being nuisance, in some sense.
 
 ### Physician and local characteristics
 
-Physician and local characteristics are perhaps confounded, since these are available
-only in aggregate and not based on individual patient interactions. We'll lump them
-together for this reason. 
+Physician and local characteristics are perhaps confounded, since these are
+available only in aggregate and not based on individual patient interactions.
+We'll lump them together for this reason.
 
 1. Aggregate demographics
   ~ Obesity, blue collar work and smoking are all available as aggregate
@@ -111,13 +119,13 @@ together for this reason.
   knee replacements.
   
 1. Access to care
-  ~ Access to orthopedic surgeons can be measured through `ortho_per_100000`, with
-  more surgeons perhaps indicative of higher rates of replacements
+  ~ Access to orthopedic surgeons can be measured through `ortho_per_100000`,
+  with more surgeons perhaps indicative of higher rates of replacements
   
 1. Physician environment
   ~ The percentage with Medicare Advantage (`mcare_adv_wtperc`), which is a HMO,
-  can be influencial since MA, which is a HMO, will promote lower cost alternatives
-  like therapy to knee replacement. 
+  can be influencial since MA, which is a HMO, will promote lower cost
+  alternatives like therapy to knee replacement.
 
 ### Behavioral and extraneous factors
 
@@ -127,8 +135,19 @@ variability in the estimates.
 # Data structure and study design
 
 The data is a retrospective collection of Medicare data from 2011-2015. Patients
-are followed multiple years, but data is only available on an annualized basis, i.e., 
-one record per patient per year. Patients may move, so they may be part of different
-HRRs in different years. ( _Can they be part of different HRRs the same year?_)
+are followed multiple years, but data is only available on an annualized basis,
+i.e., one record per patient per year. Patients may move, so they may be part of
+different HRRs in different years. ( _Can they be part of different HRRs the
+same year?_). We also have aggregate data on an annualized basis about the HRR
+characteristics.
 
+## Implications for analysis
 
+1. If we consider the entire dataset together, we have repeated measures for 
+each patient, with potentially imperfect nesting within HRR. We also have
+time-dependent covariates (like age, comorbidities, doctor visits, vital status, 
+SES, as well as HRR level covariates that can change). The repeated measures can
+be handled within `PROC GEE` or `PROC GENMOD` with a `REPEATED` and a `WITHIN` statement, 
+but the time-dependent covariates pose a bit of a problem.
+
+1. 
