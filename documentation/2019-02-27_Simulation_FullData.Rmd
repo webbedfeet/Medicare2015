@@ -1,17 +1,24 @@
 ---
-title: Understanding the data design and simulation
-author: Abhijit
+title: "Understanding the data design and simulation"
+author: "Abhijit"
 date: February 27, 2019
 output:
   html_document:
     toc: true
     #toc_float: true
     theme: united
-    highlight: zenburn
+    highlight: haddock
     md_extensions: +definition_lists
-pandoc_args: [
-"--syntax-definition","/Users/abhijit/NIAMS/Ward/Medicare2015/documentation/sas.xml"]
+    keep_md: true
+    pandoc_args: [
+      "--syntax-definition","sas.xml"]
+    standalone: true
+    self_contained: true
 ---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
 
 # Data description
 
