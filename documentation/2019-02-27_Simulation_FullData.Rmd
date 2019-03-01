@@ -1,7 +1,8 @@
 ---
 title: "Understanding the data design and simulation"
 author: "Abhijit"
-date: February 27, 2019
+# date: February 27, 2019
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
   html_document:
     toc: true
@@ -9,7 +10,6 @@ output:
     theme: united
     highlight: haddock
     md_extensions: +definition_lists
-    keep_md: true
     pandoc_args: [
       "--syntax-definition","sas.xml"]
     standalone: true
@@ -48,7 +48,8 @@ At the patient level we have
 - Poor or on Medicaid (`poor`, 0/1)
 
 We also have two variables that are based on ZCTA's, rather than the actual 
-HRR's
+HRR's. [Dartmouth](http://archive.dartmouthatlas.org/tools/downloads.aspx?tab=39){target="_blank"} provides a translation from ZIP codes to HRR, so these scores 
+can be translated to HRR data.
 
 - Socio-economic status (`zscore`)
 - Rural district (`rural`, 0/1)
@@ -63,12 +64,6 @@ rate = [patient characteristics] + [physician characteristics] + [behavioral cha
 
 The part we're interested here is in the physician characteristics, with the
 behavioral characteristics being nuisance, in some sense. 
-
-```sas
-proc genmod data = test;
-model y = x1 x2;
-run;
-```
 
 
 ### Biology and patient characteristics
@@ -114,8 +109,14 @@ We'll lump them together for this reason.
 
 1. Aggregate demographics
   ~ Obesity, blue collar work and smoking are all available as aggregate
-  percentage and can influence a local practitioner's behavior. They may have
-  limited influence, though.
+  percentage and can influence a local practitioner's behavior. It might be argued 
+  that regions with high levels of obesity would induce certain kinds of processes
+  to treat that population, compared with others with lower levels of obesity. However, 
+  since we only have HRR-level information about this factors, their influence might
+  not be as strong, since we can't assess the obesity/comorbidity relationships with 
+  age, sex and race directly. Similarly, with blue-collar work, we expect more wear-and-tear
+  among physical laborers, and also the need to be up and running (literally) may
+  promote earlier replacements so fewer work days are lost. 
   
 1. Local economics
   ~ Rural districts (`rural`) and poor districts (`zscore`) will certainly
@@ -150,11 +151,20 @@ characteristics.
 
 ## Implications for analysis
 
-1. If we consider the entire dataset together, we have repeated measures for 
+1. If we consider the entire dataset together, we have repeated measures for
 each patient, with potentially imperfect nesting within HRR. We also have
-time-dependent covariates (like age, comorbidities, doctor visits, vital status, 
+time-dependent covariates (like age, comorbidities, doctor visits, vital status,
 SES, as well as HRR level covariates that can change). The repeated measures can
-be handled within `PROC GEE` or `PROC GENMOD` with a `REPEATED` and a `WITHIN` statement, 
-but the time-dependent covariates pose a bit of a problem.
+be handled within `PROC GEE` or `PROC GENMOD` with a `REPEATED` and a `WITHIN`
+statement, but the time-dependent covariates pose a bit of a problem. We need to 
+evaluate how much exposure to time-varying covariates and inperfect nesting 
+exists. 
 
-1. 
+1. We can look at a year-by-year analysis first, looking at patterns consistent
+over the years, and identifying local/physician factors that create outlier 
+HRRs with respect to local characteristics, and how those drift over time. This 
+allows the use of regular GLM models, without worrying about repeated measures.
+
+1. Death is an interesting case. We probably need to create a variable per person
+per year to see if the person died in the current or the following year, since
+if death is proximate the chance that replacement occurs is 
