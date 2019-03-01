@@ -167,4 +167,11 @@ allows the use of regular GLM models, without worrying about repeated measures.
 
 1. Death is an interesting case. We probably need to create a variable per person
 per year to see if the person died in the current or the following year, since
-if death is proximate the chance that replacement occurs is 
+if death is proximate the chance that replacement occurs is lower. 
+
+1. One of the basic questions to ponder is if we should add any interaction terms
+to any model we use, specially interactions with year, to show drift over time, 
+and interactions with gender or race.
+
+1. We need to only use baseline age in any modeling, since otherwise age becomes
+time-varying. 
