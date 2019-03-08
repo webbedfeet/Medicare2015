@@ -1,0 +1,46 @@
+---
+title: "Cluster sampling"
+author: "Abhijit"
+date: "3/8/2019"
+output: 
+  html_document:
+    toc: true   
+    theme: united
+    highlight: haddock
+    md_extensions: +definition_lists
+    pandoc_args: [
+      "--syntax-definition","sas.xml"]
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(eval = F)
+```
+
+Grab unique patient ids
+
+```sas
+proc sql noprint;
+  create table tmp_id as
+    select distinct bene_id from sh026544.project4_hrr_end15;
+run;
+```
+
+Sample from the ids
+
+```sas
+proc surveyselect data=tmp out = tmp_sampled_id method=srs seed=745278 sampsize=500000 noprint;
+run;
+```
+
+Create sample
+
+```sas
+proc sql noprint;
+  create table sh026544.proj4_hrr_end15_sample as
+    select A.* B.* from 
+      tmp_sampled_id A left join sh026544.project4_hrr_end15 B
+        on A.bene_id = B.bene_id
+        order by bene_id, bene_enrolmt_ref_yr;
+run;
+```
+
