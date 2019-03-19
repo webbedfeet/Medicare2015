@@ -3,6 +3,9 @@ library(tidyverse)
 library(sf)
 library(plotly)
 library(openxlsx)
+library(ProjTemplate)
+library(here)
+
 
 
 # LowHigh.xlsx was hand-curated from the SAS analysis
@@ -11,7 +14,7 @@ d <- map_df(sn, ~read_excel('data/LowHigh.xlsx', sheet=.x), .id='Direction') %>%
   mutate(Direction = ifelse(Direction==1, 'Low','High')) %>%
   mutate(Level99 = ifelse(is.na(Level99), '', Level99))
 
-hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP')
+hrr_info <- st_read(fs::path(find_dropbox(),'NIAMS','Ward','Medicare2015','HRR_Bdry.SHP'))
 
 d <- d %>% left_join(hrr_info, by = c('HRR'="HRRNUM")) %>%
   select(Direction:Level99, HRRCITY, geometry) %>%
