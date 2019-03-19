@@ -1,0 +1,200 @@
+---
+title: "Data Exploration"
+pagetitle: "Test"
+author: "Abhijit"
+date: "3/7/2019"
+output: 
+  html_document:
+    toc: true   
+    theme: united
+    highlight: haddock
+    md_extensions: +definition_lists
+    pandoc_args: [
+      "--syntax-definition","sas.xml"]
+
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Descriptive analysis
+
+## HRR-level measures
+
+All HRR-level measures collected are constant for each HRR and also
+constant over the years
+
+<details>
+<summary>SAS code</summary>
+```sas
+PROC SQL;
+CREATE TABLE timevary as
+  SELECT DISTINCT hrr, bene_enrollmt_ref_yr, obese_wtperc, smoking_wtperc, 
+    mcare_adv_wtperc, ortho_per_100000
+  FROM sh026544.proj4_hrr_end15_sample;
+PROC FREQ data=timevary;
+  TABLES hrr * bene_enrollmt_ref_yr / nocum nopercent norow nocol;
+  RUN;
+```
+<details>
+
+## Zipcode-level variables
+
+Zipcode-level variables appear to be computed at an individual and mapped from 
+the zipcode they are resident in. So, these variables are not constant within
+a HRR, nor are they constant over time, though for most HRRs they are very close to 
+being constant and can be treated as such (or averaged over the 5 years)
+
+<details>
+<summary>SAS code</summary>
+```sas
+proc sql;
+create table timevary as
+  select distinct hrr, bene_enrollmt_ref_yr, mean(poor) as poor, mean(zscore) as zscore
+  from sh026544.proj4_hrr_end15_sample
+  group by hrr, bene_enrollmt_ref_yr;
+
+proc sgplot data=timevary;
+  series x=bene_enrollmt_ref_yr y = zscore / group = hrr;
+  run;
+```
+</details>
+
+We also considered quantifying how much change happened within HRR over years
+
+<details>
+<summary>SAS code</summary>
+```sas
+proc reg data=timevary;
+  model zscore=bene_enrollmt_ref_yr;
+  by hrr;
+  ods output parameterestimates=want2;
+
+data want3;
+  set want2;
+  keep hrr Variable Estimate;
+  if (Variable = "BENE_ENROLLMT_REF_YR");
+run;
+
+proc sgplot data = want3;
+  histogram Estimate;
+run;
+
+proc means data = want3;
+  var Estimate;
+run;
+```
+</details>
+
+## Individual level variables
+
+### Age
+
+Age signifies current age, which is time-varying. Some exploration shows that
+the effect of average age on replacement rate within HRRs doesn't vary much with 
+year, so it might be okay to keep age as is. Otherwise, we may need a age x year 
+interaction to see if the effect of age varies by year in the GEE. 
+
+<details>
+<summary>SAS code</summary>
+```sas
+proc sql;
+  create table indiv_level as
+  select hrr, bene_enrollmt_ref_yr, mean(age_at_end_ref_yr) as age, 
+    mean(male) as perc_male,
+    mean(case when race=1 then 1 else 0 end) as perc_white,
+    mean(case when race=2 then 1 else 0 end) as perc_black,
+    mean(acutemi) as acutemi,.....
+    mean(koa) as perc_koa, mean(koa_visits) as avg_koavisits,....
+    sum(personyears) as total_py,
+    sum(tka)/sum(personyears) as tka_rate
+  from sh026544.proj4_hrr_end15_sample
+  group by hrr, bene_enrollmt_ref_yr;
+  
+proc sgpanel data=indiv_level;
+  panelby bene_enrollmt_ref_yr;
+  loess x=age y = tka_rate;
+  scatter x=age y=tka_rate / transparency=0.7;
+run;
+
+
+ods select nlevels;
+proc freq data=sh026544.proj4_hrr_end15_sample;
+  tables bene_id;
+run;
+proc sql;
+  create table tmp as
+    select min(age_at_end_ref_yr) as min_age,
+      max(age_at_end_ref_yr) as max_age,
+      min(bene_enrollmt_ref_yr) as min_yr,
+      max(bene_enrollmt_ref_yr) as max_yr,
+      bene_id
+    from sh026544.proj4_hrr_end15_sample
+    group by bene_id
+    order by bene_id;
+```
+</details>
+
+### Movement, or how many HRRs did you visit?
+
+ Number of HRR | Frequency | Percentage 
+---------------|-----------|------------
+ 1             | 277685    | 95.54      
+ 2             | 21398     | 4.28       
+ 3             | 873       | 0.17       
+ 4             | 42        | 0.0084     
+ 5             | 2         | 0.0004     
+
+<details>
+<summary>SAS code</summary>
+```sas
+proc sql;
+  create table tmp as 
+  select distinct bene_id, hrr from sh026544.proj4_hrr_end15_sample
+  order by bene_id;
+proc sql;
+  create table tmp2 as
+    select bene_id, count(*) as N from tmp
+    group by bene_id;
+proc sql;
+  create table tmp3 as 
+    select N, count(*) as N1 from tmp2 group by N;
+proc sql;
+  select N, N1, N1/sum(N1)*100 as Perc from tmp3;
+```
+</details>
+
+### How many people were even knee patients
+
+Only 71645 out of 500,000, or around 14%
+
+<details>
+<summary>SAS code</summary>
+```sas
+data indiv_knee;
+  set sh026544.proj4_hrr_end15_sample;
+  if koa=1;
+run;
+ods select nlevels;
+proc freq data=indiv_knee nlevels;
+  tables bene_id;
+run;
+```
+</details>
+
+## Comorbidities
+
+We looked at marginal frequencies of comorbidities over time to see if there
+was variation over time. We found most comorbidities to be relatively constant
+in prevalence. The following showed some drift over time:
+
+ Comorbidity | U/D | Range         
+-------------|-----|---------------
+ CKD         | U   | 12.39 - 14.61 
+ CHF         | D   | 21.93 - 19.35 
+ IHD         | D   | 41.27 - 37.38 
+ Depress     | U   | 10.34-11.90   
+ Stroke      | D   | 12.43 - 11.37 
+ Liver       | U   | 5.78 - 6.87   
+ PVD         | D   | 17.45-16.66   

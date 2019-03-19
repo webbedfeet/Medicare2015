@@ -1,0 +1,107 @@
+---
+title: "Funnel Plots in SAS"
+author: "Abhijit"
+date: "3/8/2019"
+output: 
+  html_document:
+    toc: true   
+    theme: united
+    highlight: haddock
+    md_extensions: +definition_lists
+    pandoc_args: [
+      "--syntax-definition","/Users/abhijit/NIAMS/Ward/Medicare2015/documentation/sas.xml"]
+---
+
+```{r, include=F}
+knitr::opts_chunk$set(eval=FALSE)
+```
+
+# Funnel plot
+
+The following code is extracted from Rick Wicklin's blog:
+
+```sas
+proc iml;
+  use sh026544.funneldat;
+  read all var {hrr Events Population};
+  close sh026544.funneldat;
+  
+/* 1. compute observed rates */
+  Rate = Events / Population;
+  call histogram(Rate);
+  
+/* compute overall rate */
+  theta = sum(Events)/sum(Population)
+  Expected =  theta * Population;
+  print (sum(Events))[L="NumEvents"] (sum(Population))[L="Population"] theta;
+  
+  call symputx("AvgRate", theta);
+  
+  results = Rate || Expected;
+  labels = {"Rate" "Expected"};
+  create Stats from results[colname=labels];
+  append from results;
+  close;
+  
+/* 3. compute confience limits for a range of sample sizes */
+  minN = min(Population); maxN = max(Population);
+  n = Population;
+  n = round(n) /* maintain integer value */
+  p = {0.001 0.025 0.975 0.999};
+  limits = j(nrow(n), ncol(p));
+  
+  do i=1 to ncol(p);
+    do j = 1 to nrow(n);
+      r = quantile("poisson", p[i], n[j]*theta);
+      numer = cdf("poisson", r, theta) - p[i];
+      denom = cdf("poisson", r, theta) - cdf("poisson", r-1, theta);
+      alpha = numer/denom;
+      limits[j,i] = (r)/n[j];
+    end;
+  end;
+  
+  results = n || limits;
+  labels = {"N" "L3sd" "L2sd" "U2sd" "U3sd"};
+  create Limits from results[colname=labels];
+  append from results;
+  close;
+quit;
+
+/* merge data with rates */
+data sh026544.funneldat; merge sh026544.funneldat Stats; run;
+proc sort data=sh026544.funneldat; by Population; run;
+proc sort data=WORK.limits; by N; run;
+
+/* append control limits */
+data sh026544.Funnel;
+  merge sh026544.funneldat(rename=(Population=N)) WORK.limits;
+  by N;
+  Label = hrr;
+  if L3sd <= Rate <= U3sd then Label="";
+run;
+
+/* 4. Plot rates vs. sample size. Overlay control limits */
+
+proc sgplot data=sh026544.Funnel;
+  band x=N lower=L3sd upper=U3sd / 
+    nofill lineattrs=(color=lipk) legendlabel="99.8% limits" name="band99";
+  band x=N lower=L2sd upper=U2sd /
+    nofill lineattrs=(color=gray) legendlabel="95% limits" name="band95";
+  refline $AvgRage / axis = y;
+  scatter x=N y=Rate / datalabel=Label;
+  keylegend "band95" "band99" / location=inside position=bottomright;
+  yaxis grid values=(0 to 0.02 by 0.001); xaxis grid;
+run;
+```
+
+# Data preparation
+
+```sas
+proc sql;
+  create table sh026544.funneldat as
+    select hrr, sum(tka) as Events, round(sum(personyrs)) as Population, 
+    sum(tka)/sum(personyrs) as rate 
+    from sh-26544.proj4_hrr_end15_sample
+    group by hrr;
+run;
+```
