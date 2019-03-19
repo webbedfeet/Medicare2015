@@ -43,7 +43,7 @@ proc iml;
   append from results;
   close;
   
-/* 3. compute confience limits for a range of sample sizes */
+/* 3. compute confidence limits for a range of sample sizes */
   minN = min(Population); maxN = max(Population);
   n = Population;
   n = round(n) /* maintain integer value */
