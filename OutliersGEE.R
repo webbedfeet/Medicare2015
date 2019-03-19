@@ -6,15 +6,17 @@ library(openxlsx)
 library(ProjTemplate)
 library(here)
 
-
+datadir <- fs::path(find_dropbox(),'NIAMS','Ward','Medicare2015')
 
 # LowHigh.xlsx was hand-curated from the SAS analysis
-sn <- openxlsx::getSheetNames('data/LowHigh.xlsx')
-d <- map_df(sn, ~read_excel('data/LowHigh.xlsx', sheet=.x), .id='Direction') %>%
+
+datafile <- fs::path(here(),'data','LowHigh.xlsx')
+sn <- openxlsx::getSheetNames(datafile)
+d <- map_df(sn, ~read_excel(datafile, sheet=.x), .id='Direction') %>%
   mutate(Direction = ifelse(Direction==1, 'Low','High')) %>%
   mutate(Level99 = ifelse(is.na(Level99), '', Level99))
 
-hrr_info <- st_read(fs::path(find_dropbox(),'NIAMS','Ward','Medicare2015','HRR_Bdry.SHP'))
+hrr_info <- st_read(fs::path(datadir,'HRR_Bdry.SHP'))
 
 d <- d %>% left_join(hrr_info, by = c('HRR'="HRRNUM")) %>%
   select(Direction:Level99, HRRCITY, geometry) %>%
@@ -29,7 +31,7 @@ bl <- as.data.frame(hrr_info)
 hrr_info %>% left_join(d %>% select(Direction, HRR, Level99), by=c("HRRNUM"="HRR")) %>%
   mutate(colors = ifelse(Direction=='Low', 'green','red')) %>%
   mutate(Direction = ifelse(is.na(Direction), 'Normal', Direction)) %>%
-  mutate(Level99 = ifelse(is.na(Level99), '', Level99))-> blah
+  mutate(Level99 = ifelse(is.na(Level99), '', Level99)) -> blah
 
 if(!fs::dir_exists('outputs')) fs::dir_create('outputs')
 blah %>% as_tibble() %>% select(HRRNUM:Level99) %>%
@@ -54,14 +56,6 @@ conditionalFormatting(wb, 'Fully adjusted', cols = 4, rows = 2:(1+nrow(out)),
 setColWidths(wb, 'Fully adjusted', widths = 'auto', cols = 1:ncol(out))
 saveWorkbook(wb, file = fs::path('outputs','Outliers-fully-adjusted.xlsx'),
              overwrite = TRUE)
-
-
-
-  write.xlsx(file=fs::path('outputs', 'Outliers-full-adjustment.xlsx'),
-             creator = 'Abhijit Dasgupta',
-             colWidths = 'auto',
-             overwrite = TRUE)
-
 
 plotly::plot_ly(blah, color = ~Direction, colors = c('red','green', 'white'),
                 alpha=1, stroke = I("black"),
