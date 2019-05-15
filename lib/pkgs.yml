@@ -1,4 +1,8 @@
-- broom
 - tidyverse
+- sf
+- ggpubr
+- fs
+- here
+- broom
 - rmarkdown
 

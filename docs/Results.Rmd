@@ -1,0 +1,195 @@
+---
+title: "Results of Statistical Analysis"
+author: "Abhijit"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: yes
+  redoc::redoc:
+    highlight_outputs: false
+    comment_author: "Abhijit Dasgupta"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=F, message = F)
+```
+
+
+## RESULTS
+
+```{r, message = F, warning = F}
+library(tidyverse)
+library(rio)
+tka <- import('data/raw/TKAS2.csv') %>% 
+  rename(year = BENE_ENROLLMT_REF_YR)
+overall_smr <- import('data/raw/PROJ4_OVERALL_SMR.csv')
+hrr_info <- sf::st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP',
+                        quiet=TRUE)
+hrr_info2 <- hrr_info %>% as.data.frame() %>% 
+  select(HRRNUM, HRRCITY) %>% 
+  separate(HRRCITY, c('State', 'City'), sep = '-', extra = 'merge') %>% 
+  mutate(City = str_to_title(str_trim(City)))
+overall <- overall_smr %>% select(hrr, SMR1, SMR3) %>% left_join(hrr_info2, by = c('hrr'='HRRNUM'))
+
+```
+
+In 2011, there were  `r format(tka$tka[tka$year==2011], big.mark=",")` TKA among
+`r format(tka$n[tka$year==2011], big.mark=",")` beneficiaries in the study, while
+in
+2015, there were `r format(tka$tka[tka$year == 2015], big.mark=",")` TKA among `r format(tka$n[tka$year==2015], big.mark=",")` beneficiaries. When the expected rate of
+TKA was based on adjustment for age, sex, and race/ethnicity, the OER
+varied widely among HRRs (Supplemental figure 1-map). The highest OER of
+`r overall %>% top_n(1, SMR1) %>% pull(SMR1) %>% round(digits=2)`  was in `r glue::glue_data(overall %>% top_n(1, SMR1), "{City}, {State}")`,  while the lowest OER of 0.63 was in Newark,
+NJ. HRRs with the highest OER were predominantly white, while HRRs with
+the lowest OERs had large proportions of ethnic minorities (Supplemental
+table 1). Despite adjustment of the expected rates for race/ethnicity,
+significant correlations remained between the OER and the racial
+composition of the HRR, indicating residual confounding (Supplemental
+figure 2). Therefore, subsequent analyses used race-specific models to
+generate the expected number of TKA. Because whites comprised 84.64% of the
+sample, our analyses focused on associations among whites.
+
+```{r}
+poor <- import('data/raw/PROJ4_TKA_POOR.csv')
+dementia <- import('data/raw/PROJ4_TKA_DEMENTIA.csv')
+
+```
+
+
+Among whites, the clinical characteristics of beneficiaries varied
+widely among HRR, with for example, the percent of poor beneficiaries
+ranging from `r round(100*min(poor$prop), 2)`% to `r round(100*max(poor$prop),2)`%, and those with dementia ranging from 
+`r round(100*min(dementia$prop),2)`% to 
+`r round(100*max(dementia$prop),2)`%. 
+(Supplemental table 2). Adjustment for indicators of knee
+osteoarthritis, comorbidities, and socioeconomic status resulted in OERs
+that were somewhat less divergent, with 10^th^ and 90^th^ percentiles of
+X and X, compared to X and X for OERs based on age and sex-adjustment
+(Supplemental figure 3 and Supplemental table 3). However, substantial
+regional variation in OERs remained after adjustment for patient
+characteristics, with high OER in several HRR in the upper Midwest and
+mountain west, and low OER in the New York City region and south Florida
+(Figure 1 and Supplemental table 4).
+
+HRRs that included more rural residents had generally higher OER than
+those that were less rural (Figure 2). HRRs whose residents had fewer
+outpatient visits for knee complaints also had higher OER than those
+whose residents had more such visits. There was no association between
+the OER and the proportion of Medicare Advantage beneficiaries in an
+HRR. In contrast, HRRs with more TKA surgeons per capita had higher OERs
+than those with fewer surgeons per capita.
+
+HRRs with high OERs tended to have high OERs among patients with very
+low estimated probabilities of TKA as well as those with higher
+estimated probabilities of TKA, while HRRs with low OERs tended to have
+low OERs across quartiles of estimated probability of TKA (Figure 3).
+This pattern suggests that HRRs with high OERs were less discriminating
+in performing TKA across a spectrum of beneficiaries with varying
+likelihood of TKA, and that HRRs with low OERs were universally more
+discriminating. Consistent with this interpretation, rates of TKA among
+beneficiaries with dementia, peripheral vascular disease, and leg ulcers
+were higher in HRRs with high OERs, as were rates among healthy 65 to 69
+year-olds (Figure 4).
+
+The number of TKA surgeons per HRR ranged from X to X. Most surgeons
+regardless of HRR performed between X and X TKA annually (Figure 5).
+Look for thresholds at 60.
+
+We limited the analysis of blacks and Hispanics to those HRRs that had
+at least 15,000 black or Hispanic Medicare beneficiaries to provide
+stable OER estimates. This number corresponded to the lowest HRR
+population in the analysis of whites. Among blacks, there was
+comparatively little variation in OERs among the X HRRs studied, with a
+range from 0.X to X (Supplemental table 5). Among Hispanics, OERs ranged
+from X to X among the X HRRs that were examined (Supplemental table 5).
+HRRs with high OERs in whites also tended to have higher OERs among
+blacks and Hispanics (Figure 5). However, there was no association
+between TKA surgeon density in an HRR and the OER among blacks or
+Hispanics (Figure 5).
+
+## Figures
+
+
+Figure 1.  Observed-to-expected ratios for rates of total knee arthroplasties
+among white Medicare beneficiaries age 65 to 89 in 2011-2015, by Health Referral
+Region.  Ratios greater than 1.0 indicate higher than expected rates of total
+knee arthroplasty, while ratios less than 1.0 indicate lower than expected
+rates. 
+
+Figure 2.  Associations between the percent of beneficiaries living in rural
+areas, the number of outpatient visits for knee complaints, the percent of
+beneficiaries in Medicare Advantage plans, and the number of surgeons performing
+total knee arthroplasties per 10,000 beneficiaries in the and the
+observed-to-expected ratio for rates of total knee arthroplasty among white
+Medicare beneficiaries in each Health Referral Region.
+
+Figure 3. Observed-to-expected ratios for rates of total knee arthroplasty in
+each Health Referral Region among white Medicare beneficiaries, stratified by
+expected probability of total knee arthroplasty.  Expected probabilities were
+stratified into quartiles from very low (on the left) to highest (on the right),
+and quartile-specific observed-to-expected ratios were computed for each region.
+
+Figure 4.  Associations between rates of total knee arthroplasty among white
+Medicare beneficiaries with either dementia, peripheral vascular disease, leg
+ulcers, or who were age 65 to 69 with no comorbidities and the
+observed-to-expected ratio for rates of total knee arthroplasty by Health
+Referral Region.
+
+Figure 5.  Association between the observed-to-expected ratios for rates of
+total knee arthroplasty between white and black, and white and Hispanic,
+Medicare beneficiaries.  Associations between the observed-to-expected ratios
+for rates of total knee arthroplasty in black and Hispanic Medicare
+beneficiaries and the number of surgeons performing total knee arthroplasties
+per 10,000 beneficiaries in the Health Referral Region.
+
+## SUPPLEMENTAL TABLES & FIGURES
+
+```{r}
+library(kableExtra)
+library(gt)
+top10 <- overall_smr %>% 
+  arrange(SMR1) %>% 
+  slice(1:10, (n() - 9):n())
+top10 <- top10 %>% 
+  left_join(hrr_info2, by = c('hrr' = 'HRRNUM'))
+
+races <- read_csv('data/raw/PROJ4_RACE.csv')
+races <- races %>% spread(race, Percent) %>%
+  set_names(c('HRR','White','Black','Hispanic','Asian','Other'))
+top10 <- top10 %>% left_join(races, by = c('hrr' = 'HRR')) %>%
+  select(hrr, SMR1, City, State, White:Other) %>% 
+  mutate_at(vars(White:Other), ~./100)
+
+gt(top10) %>% 
+  tab_row_group(group = "Lowest 10", rows = 1:10) %>% 
+  tab_row_group(group = 'Highest 10', rows = 11:20) %>% 
+  fmt_number(vars(SMR1), decimals = 2) %>% 
+  fmt_percent(vars(White,Black,Hispanic,Asian,Other)) %>% 
+  cols_label(hrr = "HRR",
+             SMR1 = "O/E ratio")
+```
+
+__Supplemental Table 1:__ Racial composition in the HRRs with the highest and 
+lowest OER when adjusted for age, race and sex
+
+```{r }
+overall2 <- overall %>% left_join(races, by = c('hrr' = 'HRR')) %>% 
+  mutate_at(vars(White:Other), ~./100)
+plt1 <- ggplot(overall2, aes(x = White, y = SMR1)) + 
+  geom_point() + geom_smooth(color = 'red', se = F) + 
+  geom_hline(yintercept = 1.0, linetype = 2) + 
+  labs(y = 'O/E ratio') + 
+  scale_x_continuous(labels = scales::percent_format()) + 
+  theme_classic()
+plt2 <- ggplot(overall2, aes(x = Black, y = SMR1))+
+  geom_point() + geom_smooth(color = 'red', se = F) +
+  geom_hline(yintercept = 1.0, linetype = 2)+
+  labs(y = '') + 
+  scale_x_continuous(labels = scales::percent_format())+
+  theme_classic() +
+  theme(axis.text.y = element_blank())
+cowplot::plot_grid(plt1, plt2, align = 'v', nrow = 1, ncol = 2)
+```
+
+__Supplemental Figure 2:__ Association of OER based on age, race and sex adjustment with racial composition in the HRR
+
