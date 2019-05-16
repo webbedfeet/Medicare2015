@@ -12,14 +12,15 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning=F, message = F)
+library(tidyverse)
+library(rio)
+theme_set(theme_bw())
 ```
 
 
 ## RESULTS
 
 ```{r, message = F, warning = F}
-library(tidyverse)
-library(rio)
 tka <- import('data/raw/TKAS2.csv') %>% 
   rename(year = BENE_ENROLLMT_REF_YR)
 overall_smr <- import('data/raw/PROJ4_OVERALL_SMR.csv')
@@ -116,6 +117,31 @@ Region.  Ratios greater than 1.0 indicate higher than expected rates of total
 knee arthroplasty, while ratios less than 1.0 indicate lower than expected
 rates. 
 
+```{r}
+library(Hmisc)
+label(smr_white$rural_perc) <- 'Percent rural'
+label(smr_white$mcare_adv_wtperc) <- 'Percentage with Medicare Advantage'
+label(smr_white$ortho_per_100000) <- 'Number of orthopedists per 10000'
+label(smr_white$mean_koa_visits) <- 'Average number of knee visits per person'
+label(smr_white$frac_koa) <- 'Fraction of people with at least one knee visit'
+plot_fn <- function(variable){
+  vrbl <- enquo(variable)
+  ggplot(smr_white, aes(x = !!vrbl, y = smr3))+
+    geom_point()+
+    geom_smooth(se = F) +
+    geom_hline(yintercept = 1, linetype = 2) +
+    labs(x = label(smr_white[[ensym(vrbl)]]),y = 'SMR') +
+    theme_bw()
+}
+
+plot_fn(mean_op)
+plot_fn(mcare_adv_wtperc)
+plot_fn(ortho_per_100000)
+plot_fn(mean_koa_visits)
+plot_fn(frac_koa) + scale_x_continuous(labels=scales::percent_format())
+
+```
+
 Figure 2.  Associations between the percent of beneficiaries living in rural
 areas, the number of outpatient visits for knee complaints, the percent of
 beneficiaries in Medicare Advantage plans, and the number of surgeons performing
@@ -123,11 +149,82 @@ total knee arthroplasties per 10,000 beneficiaries in the and the
 observed-to-expected ratio for rates of total knee arthroplasty among white
 Medicare beneficiaries in each Health Referral Region.
 
+```{r}
+quarts <- rio::import('data/raw/PROJ4_MOD3_HRR_QUARTILES.csv') %>% as_tibble() %>%
+  mutate(smr = tka/exp3) %>% select(hrr, smr, quartile)
+smr_white <- rio::import('data/raw/PROJ4_SMR_WHITE.csv') %>% 
+  select(hrr, smr3) %>% 
+  mutate(quartile = 'Overall') %>% 
+  mutate(smr_group = cut(smr3, quantile(smr3, c(0,0.05,0.4, 0.6, 0.95, 1)), 
+                         include.lowest = T))
+levels(smr_white$smr_group) <- str_split(levels(smr_white$smr_group), ',') %>% 
+  map(~str_replace(., '\\(|\\)|\\[|\\]','')) %>% 
+  map(as.numeric) %>% 
+  map(~paste(round(., 2), collapse = '-')) %>% 
+  unlist()
+levels(smr_white$smr_group) <- paste(c('Very low','Low','Middle','High',
+                                       'Very high'), 
+                                     levels(smr_white$smr_group),
+                                     sep = ': ')
+
+blah <- quarts %>% bind_rows(smr_white %>% 
+                               select(-smr_group) %>% 
+                               rename(smr = smr3)) %>% 
+  filter(!is.na(smr)) # Adding the overall SMR values to the dataset
+blah <- blah %>% 
+  left_join(smr_white %>% 
+              select(hrr, smr_group)) %>%  # Adding the SMR groups to the dataset
+  mutate(quartile = as_factor(quartile)) %>% 
+  mutate(quartile = fct_recode(quartile,
+                               "Low" = "q1",
+                               "Low-middle" = "q2",
+                               "High-middle" = "q3",
+                               "High" = 'q4')) %>% 
+  mutate(quartile = fct_relevel(quartile, 'Low','Low-middle', 'High-middle',
+                                'High','Overall'))
+
+ggplot(blah, aes(x = quartile,y = smr, color = smr_group)) +
+  geom_line(aes(group = hrr), alpha = 0.7) + 
+  geom_point() + 
+  theme(legend.position = 'bottom',
+        axis.text = element_text(size = 12, face = 'bold'),
+        axis.title = element_text(size = 14, face = 'bold'),
+        legend.text = element_text(size = 10)) +
+  guides(color = guide_legend(nrow = 2, byrow = TRUE )) +
+  labs(x = 'Quartile groups of patients based on expected probability of knee surgery',
+       y = 'Probability quartile specific OER',
+       color = 'HRR-specific overall OER quartiles') + 
+  coord_cartesian(ylim = c(0,5))
+
+
+```
+
 Figure 3. Observed-to-expected ratios for rates of total knee arthroplasty in
 each Health Referral Region among white Medicare beneficiaries, stratified by
-expected probability of total knee arthroplasty.  Expected probabilities were
+beneficiary's expected probability of total knee arthroplasty.  Expected probabilities were
 stratified into quartiles from very low (on the left) to highest (on the right),
 and quartile-specific observed-to-expected ratios were computed for each region.
+
+```{r}
+conditions <- import('data/raw/PROJ4_TKA_CONDITIONS.csv')
+conditions <- conditions %>% 
+  filter(condition %in% c('dementia','pvd','ulcers','healthy')) %>% 
+  mutate(condition = as.factor(condition)) %>% 
+  mutate(condition = fct_recode(condition, 
+                                'Dementia' = 'dementia',
+                                'Peripheral vascular disease' = 'pvd',
+                                'Leg ulcers' = 'ulcers',
+                                'Healthy' = 'healthy'))
+ggplot(conditions, aes(x = prop, y = smr3)) + 
+  geom_point() + 
+  geom_smooth(se = F, color = 'red') + 
+  geom_hline(yintercept = 1, linetype = 2) +
+  facet_wrap(~ condition, scales = 'free_x') +
+  labs( x = 'Prevalence per 1000 subjects', 
+        y = 'Observed/Expected Ratio (OER)') + 
+  theme(text = element_text(size = 14))
+
+```
 
 Figure 4.  Associations between rates of total knee arthroplasty among white
 Medicare beneficiaries with either dementia, peripheral vascular disease, leg
@@ -135,12 +232,34 @@ ulcers, or who were age 65 to 69 with no comorbidities and the
 observed-to-expected ratio for rates of total knee arthroplasty by Health
 Referral Region.
 
+```{r}
+smr_black <- read_csv('data/raw/Black_SMR.csv') %>% 
+  filter(n >= 15000)
+smr_white <- read_csv('data/raw/PROJ4_SMR_WHITE.csv')
+smrs <- bind_rows(smr_white, smr_black) %>% 
+  mutate(race = ifelse(race == 1, 'White','Black')) %>%
+  mutate(race = as_factor(race)) %>% 
+  # mutate(race = fct_relevel('White')) %>% 
+  select(hrr, race, smr3, ortho_per_100000)
+ggplot(smrs, aes(x = ortho_per_100000, y = smr3, group = race, color = race)) +
+  geom_point(alpha = 0.5) + geom_smooth(se = F) +
+  # scale_y_log10() +
+  geom_hline(yintercept = 1, linetype = 2) +
+  # scale_color_manual(values = c('White'='black','Black' = 'blue')) + 
+  labs(x = 'Number of surgeons performing TKA\nper 10,000 beneficiaries',
+       y = 'Observed/Expected ratio (OER)',
+       color = 'Race') + 
+  theme(text = element_text(size = 14))
+```
+
+
 Figure 5.  Association between the observed-to-expected ratios for rates of
-total knee arthroplasty between white and black, and white and Hispanic,
+total knee arthroplasty between white and black 
 Medicare beneficiaries.  Associations between the observed-to-expected ratios
-for rates of total knee arthroplasty in black and Hispanic Medicare
+for rates of total knee arthroplasty in white and black Medicare
 beneficiaries and the number of surgeons performing total knee arthroplasties
-per 10,000 beneficiaries in the Health Referral Region.
+per 10,000 beneficiaries in the Health Referral Region. HRRs for blacks are restricted to those with at least 15,000
+black beneficiaries. 
 
 ## SUPPLEMENTAL TABLES & FIGURES
 
@@ -171,6 +290,23 @@ gt(top10) %>%
 
 __Supplemental Table 1:__ Racial composition in the HRRs with the highest and 
 lowest OER when adjusted for age, race and sex
+
+```{r}
+suppl2 <- import('data/raw/SupplTab2_2.csv')
+out <- suppl2 %>% select(-hrr) %>% 
+  gather(variable, value) %>% 
+  group_by(variable) %>% 
+  summarize(Min = min(value), `10%` = quantile(value, 0.1),
+            Median = median(value),
+            `90%` = quantile(value, 0.9),
+            Max = max(value))
+gt(out) %>% 
+  fmt_percent(columns = 2:6, rows = (Max <= 1)) %>% 
+  fmt_number(columns = 2:6, rows = (Max > 1), decimal = 2)
+```
+
+
+__Supplemental Table 2:__ Distribution of demographic and clinical characteristics across HRRs
 
 ```{r }
 overall2 <- overall %>% left_join(races, by = c('hrr' = 'HRR')) %>% 

@@ -1,0 +1,488 @@
+---
+title: "Regional differences in rates of total knee arthroplasty among U.S. Medicare beneficiaries"
+author: Michael M. Ward and Abhijit Dasgupta
+output: redoc::redoc
+abstract: 
+  Objective.  
+  
+  Methods.  
+  
+  Results.  
+  
+  Conclusions.  
+  
+---
+
+-----
+
+Michael M. Ward, MD, MPH, Abhijit Dasgupta, PhD, Intramural Research
+Program, National Institute of Arthritis and Musculoskeletal and Skin
+Diseases, National Institutes of Health.
+
+Address for correspondence: Dr. Michael Ward, NIAMS/NIH, Building 10
+CRC, Room 4-1339, 10 Center Drive, Bethesda, MD 20892-1468. Telephone
+301-496-7263; electronic mail <wardm1@mail.nih.gov>.
+
+Running title: Regional differences in TKA
+
+Word count:
+
+This work was supported by the Intramural Research Program, National
+Institute of Arthritis and Musculoskeletal and Skin Diseases, National
+Institutes of Health (ZIA-AR-041153).
+
+The author has no commercial or financial conflicts of interest related
+to this work.
+
+------
+
+Total knee arthroplasty (TKA) is a highly effective treatment for
+patients with chronic knee pain and functional limitations, most often
+due to osteoarthritis, that is not responsive to more conservative
+interventions [1-4]. Among Medicare beneficiaries, TKA is second only
+to cataract extractions as the most common operation, with more than
+380,000 procedures performed in 2012, at an aggregate cost of over \$3
+billion [5,6]. Rates of TKA in Medicare beneficiaries doubled between
+1991 and 2010, and are projected to escalate further over the coming
+decades [1,7].
+
+Despite increasing use, geographic variation in rates of TKA across the
+United States have persisted [8]. As early as 1988, rates of TKA among
+Medicare beneficiaries were noted to be more than four times higher in
+some midwestern and western states than in other regions [9]. This
+geographic variation has endured, raising questions about relative
+overuse or underuse of TKA in different regions [10-13]. Although
+patient preferences play a major role in the decision to have TKA,
+differences in physician practice patterns have been implicated in
+regional variations in surgery rates [14-17].
+
+Prior studies did not adjust for patient-related factors other than age,
+sex, and race, and did not examine potential correlates of overuse or
+underuse. We examined rates of primary TKA in Medicare beneficiaries in
+2011 -- 2015 to address three questions: do rates vary by region after
+accounting for differences in the prevalence of knee osteoarthritis and
+its major risk factors, comorbidities, and socioeconomic status? Do
+rates vary with regional differences in access to care, including use of
+outpatient care and the availability of orthopedic surgeons? And, to
+address appropriateness, are the characteristics of patients who receive
+TKA different in in high-use compared to low-use regions?
+
+## METHODS
+
+_Data source_. In this retrospective cohort study, we
+computed the annual incidence of primary TKA among Medicare
+beneficiaries using 100% Medicare Part A and Part B fee-for-service
+claims from 2011 to 2015. Data on inpatient hospitalizations included up
+to 25 possible diagnosis codes and 25 procedure codes for surgeries and
+other interventions. Data on outpatient claims included up to 13
+possible diagnosis codes per visit. International Classification of
+Diseases, Ninth Revision, Clinical Modification (ICD-9-CM) codes were
+used for diagnoses and procedures for all visits except those in the
+last quarter of 2015, when ICD-10-CM codes were used. We used five years
+of data to provide stable estimates of TKA rates.
+
+The study protocol was approved by the local institutional review board.
+Data were made available by the Centers for Medicare and Medicaid
+Services (CMS) through a data use agreement.
+
+_Patients and outcome_. We included all Medicare
+beneficiaries age 65 to 89 years who lived in one of the 50 U.S. states
+or District of Columbia, were enrolled in Parts A and B, and were not
+enrolled in Medicare Advantage plans. We excluded persons younger than
+65 because they likely had selected health conditions that permitted
+early Medicare eligibility, and excluded persons 90 or older because
+this age group is overrepresented in the Midwest [18]. Rates of
+primary TKA are low in persons age 90 or older [9]. Follow-up ended if
+the beneficiary reached age 90, or at the time of death or enrollment in
+Medicare Advantage.
+
+Among these beneficiaries, we identified all instances of primary TKA in
+the hospitalization files using the corresponding procedure codes
+(ICD-9-CM 81.54; ICD-10-CM 0SRC or 0SRD). During the study years, TKA
+was still largely performed as an inpatient procedure in Medicare
+beneficiaries [19]. We computed annual incidences of primary TKA by
+Hospital Referral Region (HRR) from the Dartmouth Atlas for Health Care
+[13]. HRRs are 306 tertiary medical care regions that are based on
+local referral patterns for major surgeries. Each HRR has at least one
+hospital that performed both cardiovascular surgery and neurosurgery and
+has a minimum population of 120,000. We used linkages provided by CMS to
+map each beneficiary's zip code of residence to one of the 306 HRRs
+[20].
+
+We abstracted data on patient-related factors that were thought
+potentially related to the likelihood of TKA to use as adjustments for
+regional differences in TKA rates. Demographic characteristics included
+age, sex, and race/ethnicity (white, black, Hispanic, Asian, and other).
+We identified beneficiaries as having knee osteoarthritis (ICD-9-CM
+715.X6; ICD-10-CM M17) or knee symptoms (ICD-9-CM 719.X6; ICD-10-CM
+M2506, M2526, M2536, M2546, M2556, M2566, M2576, M2586) based on
+outpatient visit diagnosis codes. Because knee osteoarthritis may be
+under-recorded in claims, we also included three area-level risk factors
+for knee osteoarthritis that vary by region: obesity, smoking, and
+occupational physical activity [21]. We used county-level data on the
+prevalence of obesity and current smoking from 2011 in the Behavioral
+Risk Factor Surveillance System, and used county-to-HRR crosswalks to
+estimate obesity and smoking prevalences in HRRs. [22-24]. Similarly,
+we used county-level data from the U.S. Census 2011-2015 summary files
+to estimate the proportion of the population age 16 or older engaged in
+physically demanding occupations (construction, installation, building
+maintenance, firefighting, and farming) in each HRR [25].
+
+Willingness to consider TKA may be affected by the presence of
+comorbidities. Therefore, for each beneficiary we identified the
+presence or absence of 20 comorbid conditions, based on inpatient and
+outpatient claims and updated annually, using CMS Chronic Conditions
+Warehouse definitions: recent acute myocardial infarction; recent atrial
+fibrillation; ever ischemic heart disease; ever congestive heart
+failure; ever stroke; ever peripheral vascular disease; recent skin
+ulcer; ever chronic obstructive pulmonary disease; recent diabetes
+mellitus; recent chronic kidney disease; ever cirrhosis or other chronic
+liver disease; ever HIV/AIDS; ever dementia; recent depression; ever
+hematological malignancy; ever breast cancer; ever lung cancer, ever
+colorectal cancer; ever prostate cancer; and ever endometrial cancer
+[26].
+
+TKA is less common among persons of low socioeconomic status [27,28].
+We categorized a patient as poor if they received government subsidies
+for insurance premiums. We also used an area-level measure of
+socioeconomic status, based on seven economic characteristics of
+patient's zip code of residence from the 2010 U.S. Census [29]. The z
+scores (i.e. number of standard deviations above or below the national
+average) for each measure are computed for each zip code, and summed to
+derive the area-based socioeconomic score. A zip code that was at the
+national average on all measures would have a score of 0.
+
+We also examined four measures thought to be potentially related to
+access to TKA. We classified beneficiaries as living in a rural area if
+their zip code of residence was outside an urban center or cluster in
+the 2010 U.S. Census [22,30]. We used the annual number of knee visits
+to any provider as a measure of access to outpatient care. Because the
+degree of local market penetration by managed care plans can influence
+the care provided to patients insured by fee-for-service plans, we used
+CMS data on the proportion of Medicare beneficiaries enrolled in
+Medicare Advantage plans in each county and year to compute weighted
+averages of Medicare Advantage penetration in each HRR [31-33]. We
+also counted the number of surgeons in each HRR that performed primary
+TKA among Medicare beneficiaries in the study years, based on the
+National Provider Identifier of the operating surgeon. We divided this
+number by the population of each HRR as a measure of TKA surgeon
+density. We used this measure, as opposed to the number of orthopedic
+surgeons, because nationally only one-half of orthopedic surgeons
+perform joint arthroplasties [34].
+
+_Statistical analysis_. The outcome was primary TKA, which
+could include more than one event per beneficiary. To compare the
+incidence of TKA among HRRs, we first used data from all HRRs to
+estimate expected rates of TKA based on the characteristics of all
+beneficiaries. We then compared the observed rates of TKA in each HRR to
+the expected rates as an Observed/Expected ratio (OER). To derive the
+expected rates, we used Poisson models to estimate each beneficiary's
+probability of TKA, based on a given set of covariates, and summed these
+probabilities among all beneficiaries in an HRR. In the initial model,
+we included only age (in five categories: 65-69 years, 70-74 years,
+75-79 years, 80-84 years, and 85-89 years), sex, race/ethnicity, and
+age-sex interactions as covariates. In the full model, we also included
+indicator variables for knee osteoarthritis, each of the 20 comorbid
+conditions, and being poor, as well as the area-level measures of the
+proportions of residents who were obese, smokers, or had physically
+demanding occupations, and area-level socioeconomic status. We then
+divided the observed number of TKA by the expected number of TKA, based
+on the beneficiaries in each HRR, to obtain the OER. We specified
+separate models for each study year, and averaged the five estimates of
+OER for use in analysis. How comparable were estimates across years? Why
+not use repeated/hierarchical models? An OER of 1.0 would indicate a HRR
+in which the observed rate of TKA was the same as the expected rate,
+while in HRR with OER greater than 1.0, the observed rate exceeded the
+expected rate.
+
+To determine the degree to which patient characteristics other than age,
+sex, and race/ethnicity affected rates of TKA among HRRs, we compared
+the distribution of RRs based on the full model to OERs based on the
+initial demographic-only model. We also examined correlations between
+OERs based on the full model and the four measures of access to TKA: the
+percent of HRR beneficiaries that lived in rural areas, the annual
+number of outpatient visits for knee complaints, the percent of HRR
+beneficiaries in a Medicare Advantage plan, and TKA surgeon density.
+
+To examine if the characteristics of patients who received TKA differed
+among beneficiaries in HRRs with high OER or low OERs, we computed OERs
+after stratifying the sample into quartiles based on the expected
+probability of TKA (ranging from very low probability to highest
+probability). In this analysis, we sought to determine if the OER of a
+given HRR was similarly high among beneficiaries with a very low
+probability of TKA and those with a higher probability of TKA. We also
+computed the rate of TKA among beneficiaries with dementia, peripheral
+vascular disease, or leg ulcers, which are relative contraindications to
+TKA, and correlated these rates with the OER across HRRs [35].
+Similarly, we computed the rate of TKA among beneficiaries age 65 to 69
+who had no comorbidity, as a group of healthy persons, and correlated
+these rates with the OER. Lastly, we examined the number of TKAs per
+surgeon in each HRR to determine if rates were influenced by a few
+high-volume surgeons or many low volume surgeons. Surgeons were
+classified based on their annual number of TKA as low-volume (1-12),
+medium-volume (13-59), high-volume (60-145) or very high-volume (\>
+145). Higher surgeon volumes have been associated with fewer TKA
+complications [36].
+
+We used SAS programs (version 9.4, SAS Institute, Cary NC) for analysis.
+
+## RESULTS
+
+In 2011, there were X TKA among X beneficiaries in the study, while in
+2015, there were X TKA among X beneficiaries. When the expected rate of
+TKA was based on adjustment for age, sex, and race/ethnicity, the OER
+varied widely among HRRs (Supplemental figure 1-map). The highest OER of
+1.86 was in Idaho Falls, ID, while the lowest OER of 0.63 was in Newark,
+NJ. HRRs with the highest OER were predominantly white, while HRRs with
+the lowest OERs had large proportions of ethnic minorities (Supplemental
+table 1). Despite adjustment of the expected rates for race/ethnicity,
+significant correlations remained between the OER and the racial
+composition of the HRR, indicating residual confounding (Supplemental
+figure 2). Therefore, subsequent analyses used race-specific models to
+generate the expected number of TKA. Because whites comprised X% of the
+sample, our analyses focused on associations among whites.
+
+Among whites, the clinical characteristics of beneficiaries varied
+widely among HRR, with for example, the percent of poor beneficiaries
+ranging from X% to X%, and those with dementia ranging from X% to X%
+(Supplemental table 2). Adjustment for indicators of knee
+osteoarthritis, comorbidities, and socioeconomic status resulted in OERs
+that were somewhat less divergent, with 10^th^ and 90^th^ percentiles of
+X and X, compared to X and X for OERs based on age and sex-adjustment
+(Supplemental figure 3 and Supplemental table 3). However, substantial
+regional variation in OERs remained after adjustment for patient
+characteristics, with high OER in several HRR in the upper Midwest and
+mountain west, and low OER in the New York City region and south Florida
+(Figure 1 and Supplemental table 4).
+
+HRRs that included more rural residents had generally higher OER than
+those that were less rural (Figure 2). HRRs whose residents had fewer
+outpatient visits for knee complaints also had higher OER than those
+whose residents had more such visits. There was no association between
+the OER and the proportion of Medicare Advantage beneficiaries in an
+HRR. In contrast, HRRs with more TKA surgeons per capita had higher OERs
+than those with fewer surgeons per capita.
+
+HRRs with high OERs tended to have high OERs among patients with very
+low estimated probabilities of TKA as well as those with higher
+estimated probabilities of TKA, while HRRs with low OERs tended to have
+low OERs across quartiles of estimated probability of TKA (Figure 3).
+This pattern suggests that HRRs with high OERs were less discriminating
+in performing TKA across a spectrum of beneficiaries with varying
+likelihood of TKA, and that HRRs with low OERs were universally more
+discriminating. Consistent with this interpretation, rates of TKA among
+beneficiaries with dementia, peripheral vascular disease, and leg ulcers
+were higher in HRRs with high OERs, as were rates among healthy 65 to 69
+year-olds (Figure 4).
+
+The number of TKA surgeons per HRR ranged from X to X. Most surgeons
+regardless of HRR performed between X and X TKA annually (Figure 5).
+Look for thresholds at 60.
+
+We limited the analysis of blacks and Hispanics to those HRRs that had
+at least 15,000 black or Hispanic Medicare beneficiaries to provide
+stable OER estimates. This number corresponded to the lowest HRR
+population in the analysis of whites. Among blacks, there was
+comparatively little variation in OERs among the X HRRs studied, with a
+range from 0.X to X (Supplemental table 5). Among Hispanics, OERs ranged
+from X to X among the X HRRs that were examined (Supplemental table 5).
+HRRs with high OERs in whites also tended to have higher OERs among
+blacks and Hispanics (Figure 5). However, there was no association
+between TKA surgeon density in an HRR and the OER among blacks or
+Hispanics (Figure 5).
+
+## DISCUSSION
+
+## REFERENCES
+
+1\. Ethgen O, Bruyere O, Richy F, Dardennes C, Reginster JY.
+Health-related quality of life in total hip and total knee arthroplasty:
+a qualitative and systematic review of the literature. J Bone Joint Surg
+Am 2004;86:963-74.
+
+2\. Zhang W, Moskowitz RW, Nuki G, Abramson S, Altman RD, Arden N,
+Bierma-Zeinstra S, Brandt KD, Croft P, Doherty M, Dougados M. OARSI
+recommendations for the management of hip and knee osteoarthritis, Part
+II: OARSI evidence-based, expert consensus guidelines. Osteoarthritis
+Cartilage 2008;16:137-62.
+
+3\. Daigle ME, Weinstein AM, Katz JN, Losina E. The cost-effectiveness of
+total joint arthroplasty: a systematic review of published literature.
+Best Pract Res Clin Rheumatol 2012; 26:649-58.
+
+4\. Fingar KR, Stocks C, Weiss AJ, Steiner CA. Most Frequent Operating
+Room Procedures Performed in U.S. Hospitals, 2003-2012. HCUP Statistical
+Brief \#186. December 2014. Agency for Healthcare Research and Quality,
+Rockville, MD.
+<http://www.hcup-us.ahrq.gov/reports/statbriefs/sb186-Operating-Room-Procedures-United-States-2012.pdf>.
+
+5\. Cram P, Lu X, Kates SL, Singh JA, Li Y, Wolf BR. Total knee
+arthroplasty volume, utilization, and outcomes among Medicare
+beneficiaries, 1991-2010. JAMA 2012; 308:1227-36.
+
+6\. Li Y, Lu X, Wolf BR, Callaghan JJ, Cram P. Variation of Medicare
+payments for total knee arthroplasty. J Arthroplasty 2013;28:1513-20.
+
+7\. Kurtz S, Ong K, Lau E, Mowat F, Halpern M. Projections of primary and
+revision hip and knee arthroplasty in the United States from 2005 to
+2030. J Bone Joint Surg 2007; 89:780-5.
+
+8\. Birkmeyer JD, Reames BN, McCulloch P, Carr AJ, Campbell WB, Wennberg
+JE. Understanding of regional variation in the use of surgery. Lancet
+2013;382:1121-9.
+
+9\. Peterson MG, Hollenberg JP, Szatrowski TP, Johanson NA, Mancuso CA,
+Charlson ME. Geographic variations in the rates of elective total hip
+and knee arthroplasties among Medicare beneficiaries in the United
+States. J Bone Joint Surg 1992;74:1530-9.
+
+10\. Katz BP, Freund DA, Heck DA, Dittus RS, Paul JE, Wright J, Coyte P,
+Holleman E, Hawker G. Demographic variation in the rate of knee
+replacement: a multi-year analysis. Health services research. Health
+Serv Res 1996;31:125-40.
+
+11\. Skinner J, Weinstein JN, Sporer SM, Wennberg JE. Racial, ethnic, and
+geographic disparities in rates of knee arthroplasty among Medicare
+patients. N Engl J Med 2003; 349:1350-9.
+
+12\. Mahomed NN, Barrett J, Katz JN, Baron JA, Wright J, Losina E.
+Epidemiology of total knee replacement in the United States Medicare
+population. J Bone Joint Surg Am 2005;87:1222-8.
+
+13\. The Dartmouth Institute for Health Policy and Clinical Practice. The
+Dartmouth Atlas of Health Care. <http://www.dartmouthatlas.org>.
+Accessed November 28, 2017.
+
+14\. Hawker GA, Wright JG, Coyte PC, Williams JI, Harvey B, Glazier R,
+Wilkins A, Badley EM. Determining the need for hip and knee
+arthroplasty: the role of clinical severity and patients' preferences.
+Med Care 2001;39:206-16.
+
+15\. Mota RE, Tarricone R, Ciani O, Bridges JF, Drummond M. Determinants
+of demand for total hip and knee arthroplasty: a systematic literature
+review. BMC Health Services Res 2012; 12:225.
+
+16\. Wright JG, Hawker GA, Bombardier C, Croxford R, Dittus RS, Freund
+DA, Coyte PC. Physician enthusiasm as an explanation for area variation
+in the utilization of knee replacement surgery. Med Care 1999;37:946-56.
+
+17\. Mulley AG. Inconvenient truths about supplier induced demand and
+unwarranted variation in medical practice. BMJ 2009;339:b4073.
+
+18\. He W, Muenchrath MN. U.S. Census Bureau, American Community Survey
+Reports, ACS-17, 90+ in the United States: 2006--2008, U.S. Government
+Printing Office, Washington, DC,
+
+2011.
+
+19\. Courtney PM, Froimson MI, Meneghini RM, Lee G-C, Della Valle CJ. Can
+total knee arthroplasty be performed safely as an outpatient in the
+Medicare population? J Arthroplasty 2018; 33:S28-S31.
+
+20\. Centers for Medicare and Medicaid Services. Medicare Geographic
+Variation Public Use Files [internet]. 2017 [cited 2017 October 10];
+Available from:
+<https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Geographic-Variation/GV_PUF.html>
+
+21\. Blagojevic M, Jinks C, Jeffery A, Jordan KP. Risk factors for onset
+of osteoarthritis of the knee in older adults: a systematic review and
+meta-analysis. Osteoarthritis Cartilage 2010; 18:24-33.
+
+22\. Missouri Census Data Center. MABLE/Geocorr14: Geographic
+Correspondence Engine [internet]. 2107 [cited 17 October 2017];
+Available from: http://mcdc.missouri.edu/websas/geocorr14.html
+
+23\. Dwyer-Lindgren L, Freedman G, Engell RE, Fleming TD, Lim SS, Murray
+CJ, Mokdad AH. Prevalence of physical activity and obesity in US
+counties, 2001--2011: a road map for action. Popul Health Metr
+2013;11:7.
+
+24\. Dwyer-Lindgren L, Mokdad AH, Srebotnjak T, Flaxman AD, Hansen GM,
+Murray CJ. Cigarette smoking prevalence in US counties: 1996-2012. Popul
+Health Metr 2014;12:5.
+
+25\. United States Census Bureau. 2011 American Community Survey 5 year
+summary files. Data set [internet]. 2017 [cited 2017 November 8];
+Available from:
+<https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml>
+
+26\. Centers for Medicare and Medicaid Services. Chronic Conditions Data
+Warehouse [internet]. 2017 [cited 2018 Feb 26]; Available from:
+<https://www.ccwdata.org/web/guest/condition-categories>
+
+27\. Hanchate AD, Zhang Y, Felson DT, Ash AS. Exploring the determinants
+of racial and ethnic disparities in total knee arthroplasty: health
+insurance, income, and assets. Med Care 2008; 46:481-8.
+
+28\. Hawker GA, Guan J, Croxford R, Coyte PC, Glazier RH, Harvey BJ,
+Wright JG, Williams JI, Badley EM. A prospective population‐based study
+of the predictors of undergoing total joint arthroplasty. Arthritis
+Rheumatol 2006; 54:3212-20.
+
+29\. Ward MM. Socioeconomic status and the incidence of ESRD. Am J Kidney
+Dis 2008; 51:563-72.
+
+30\. Francis ML, Scaife SL, Zahnd WE, Cook EF, Schneeweiss S. Joint
+replacement surgeries among Medicare beneficiaries in rural compared
+with urban areas. Arthritis Rheumatol 2009; 60:3554-62.
+
+31\. Baker LC. Managed care spillover effects. Annu Rev Public Health
+2003; 24:435-56.
+
+32\. Baicker K, Chernew ME, Robbins JA. The spillover effects of Medicare
+managed care: Medicare Advantage and hospital utilization. J Health Econ
+2013;32:1289-300.
+
+33\. Centers for Medicare and Medicaid Services. Medicare Advantage/Part
+D Contract and Enrollment Data [internet]. 2017 [cited 2017 October
+30]; Available from:
+<https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/MCRAdvPartDEnrolData/index.html>
+
+34\. Fehring TK, Odum SM, Troyer JL, Iorio R, Kurtz SM, Lau EC. Joint
+replacement access in 2016: a supply side crisis. J Arthroplasty 2010;
+25:1175-81.
+
+35\. Cross WW 3rd, Saleh KJ, Wilt TJ, Kane RL. Agreement about
+indications for total knee arthroplasty. Clin Orthop Relat Res 2006;
+446:34-9.
+
+36\. Wilson S, Marx RG, Pan TJ, Lyman S. Meaningful thresholds for the
+volume-outcome relationship in total knee arthroplasty. J Bone Joint
+Surg Am 2016; 98:1683-1690.
+
+## FIGURE LEGENDS
+
+Figure 1. Observed-to-expected ratios for rates of total knee
+arthroplasties among white Medicare beneficiaries age 65 to 89 in
+2011-2015, by Health Referral Region. Ratios greater than 1.0 indicate
+higher than expected rates of total knee arthroplasty, while ratios less
+than 1.0 indicate lower than expected rates.
+
+Figure 2. Associations between the percent of beneficiaries living in
+rural areas, the number of outpatient visits for knee complaints, the
+percent of beneficiaries in Medicare Advantage plans, and the number of
+surgeons performing total knee arthroplasties per 10,000 beneficiaries
+in the and the observed-to-expected ratio for rates of total knee
+arthroplasty among white Medicare beneficiaries in each Health Referral
+Region.
+
+Figure 3. Observed-to-expected ratios for rates of total knee
+arthroplasty in each Health Referral Region among white Medicare
+beneficiaries, stratified by expected probability of total knee
+arthroplasty. Expected probabilities were stratified into quartiles from
+very low (on the left) to highest (on the right), and quartile-specific
+observed-to-expected ratios were computed for each region.
+
+Figure 4. Associations between rates of total knee arthroplasty among
+white Medicare beneficiaries with either dementia, peripheral vascular
+disease, leg ulcers, or who were age 65 to 69 with no comorbidities and
+the observed-to-expected ratio for rates of total knee arthroplasty by
+Health Referral Region.
+
+Figure 5. Association between the observed-to-expected ratios for rates
+of total knee arthroplasty between white and black, and white and
+Hispanic, Medicare beneficiaries. Associations between the
+observed-to-expected ratios for rates of total knee arthroplasty in
+black and Hispanic Medicare beneficiaries and the number of surgeons
+performing total knee arthroplasties per 10,000 beneficiaries in the
+Health Referral Region.
