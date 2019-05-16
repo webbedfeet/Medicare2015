@@ -5,11 +5,17 @@ output:
   html_notebook:
     code_folding: hide
     highlight: tango
-    includes:
-      in_header: header.html
     theme: journal
     toc: yes
     toc_float: yes
+  html_document:
+    theme: journal
+    toc: yes
+    toc_float: yes
+    highlight: tango
+    colde_folding: hide
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, warning=FALSE, message = FALSE, include = FALSE}
@@ -245,4 +251,106 @@ and you just use the HRR-averaged predicted rate?
 1. Does time clock stop at 2nd replacement?
 1. Are any of our predictors time-dependent?
 1. Is there really an effect beyond natural variation? Looking at some posts on small area estimation and funnel plots, and it might be worthwhile to see if what we're seeing is just Poisson variation, and we really don't need to explain anything.  We could look at relationship with person-years followed or number of knee visits. 
+
+# April, 2019
+
+## Race-specific analyses
+
+We are doing separate analyses for whites and blacks (and hispanics, later). The reasoning behind this is that the differences we're seeing may be due to differences in demographic composition in HRRs, since we've seen that whites are much more inclined to get replacements than whites (9 per 1000 vs 5 per thousand). So doing a separate white analysis gets to the geographic component of this. 
+
+We're only doing Model 3 for the expecteds (i.e. age, sex, race, comorbidities, obesity, physical jobs, smoking, poor and SES), and then using SES-level factors (medicare advantage participation, rural/urban, concentration of orthpedists) to see the variation in the SMRs by these factors.
+
+One thing we do see is that a lot of unexplained variation is still evidenced in the funnel plots, which might be explained by the storn associations with number of outpatient visits and orthopedist concentration among whites.
+
+## Orthopedist analysis
+
+First look at the avg and variation in number of replacements done by orthopedists, and model that against HHR-SMR. 
+
+Two better ideas by Mike (2019-04-12):
+
+1. Model the SMR for the surgeon (with expecteds tallied by looking at the expected rates for the 
+surgeon's patients) against their volume, color coding by HRR-SMR (low/normal/high). Restrict to whites and surgeons with at least 5 surgeries. 
+1. Compute the probability (propensity) of each replacement patient actually getting a replacement, and then compare that with their actual rate of getting a replacement, by each HRR. So we have to compute the propensity of getting a replacement and generate a "calibration" plot to see what fraction of those with low expecteds got surgery, compared to what fraction of high expecteds got surgery. One line per HRR
+1. Compare HRR-SMR with % dementia, % CHF and % (comorb with strong protective effect) among recipients.
+
+# April 18, 2019
+
+We have questions on two scales: (1) the population scale, and (2) the orthopedist scale. To get to propensity estimates of surgery in the latter, we may need to consider new inclusion/exclusion criteria for modeling, specifically looking just at anyone who has had at least one orthopedist visit.
+
+There are a couple of problems to consider: 
+
+1. Are high SMRs at the HRR level due to a general locale phenomenon (the overall sky) or due to one or few trigger-happy orthopedists (shooting star)
+1. Comparing the expected probablity of getting surgery with the SMRs to see if the expected probability is generally higher in those regions with high HRR. 
+
+For the population / HRR level analyses, we have a couple of things to look at:
+
+1. How does the number of knee op visits correlate with SMR
+1. How does the probability of surgery for someone with dementia, CHF, and one other protective factor relate to SMRs. 
+
+
+### Creating grouped CDF plots in SAS
+
+```sas
+proc sql;
+	create table overall as select hrr, bene_id, max(Predicted) as Predicted from 
+		sh026544.mod3_summary;
+	group by bene_id, hrr;
+
+proc univariate data=overall noprint;
+	var Predicted;
+	class hrr;
+	cdf Predicted/ overlay;
+	ods output cdfplot=outCDF;
+run;
+
+proc sql;
+	create table tmp as select hrr, smr3 from sh026544.mod3_summary;
+
+proc sql;
+	create table together as select * from outCDF a left join tmp b on 
+		a.hrr=b.Class1;
+
+data together;
+	set together;
+	group=.;
+
+	if(smr3 > 1.5) then
+		group='Very high';
+
+	if(smr3 <=1.5 and smr3 > 1.2) then
+		group='High';
+
+	if(smr3 <=1.2 and smr3 >=1/1.2) then
+		group='Normal';
+
+	if(smr3 < 1/1.2 and smr3 >=1/1.5) then
+		group='Low';
+
+	if(smr3 < 1/1.5) then
+		group='Very low';
+run;
+
+proc sort data=together;
+	by hrr ecdfx;
+run;
+
+ods graphics off;
+ods graphics on / maxlegendarea=100;
+
+proc sgplot data=together;
+	series x=ecdfx y=ecdfy / group=hrr lineattrs=(pattern=Solid) grouplc=group 
+		transparency=0.7;
+	keylegend / title='HRR' position=bottom sortorder=ascending;
+run;
+
+ods graphics off;
+ods graphics on / maxlegendarea=100;
+
+proc sgpanel data=together;
+	panelby group;
+	series x=ecdfx y=ecdfy / group=hrr lineattrs=(pattern=Solid) grouplc=group 
+		transparency=0.7;
+	keylegend / title='HRR' position=bottom sortorder=ascending;
+run;
+```
 
