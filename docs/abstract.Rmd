@@ -1,0 +1,28 @@
+```{r, echo = F, message = F}
+library(tidyverse)
+smr_overall <- read_csv('data/raw/PROJ4_OVERALL_SMR.csv') %>% 
+  set_names(str_to_lower(names(.)))
+smr_black <- read_csv('data/raw/Black_SMR.csv') %>% 
+  filter(n > 15000)
+smr_white <- read_csv('data/raw/PROJ4_SMR_WHITE.csv')
+```
+
+
+Results.  Because observed/expected ratios based on expected rates that were
+adjusted for differences in age, sex, and race/ethnicity demonstrated residual
+confounding by race/ethnicity, we performed race-stratified analyses.  *Among
+white beneficiaries, adjustment for demographic, socioeconomic, and clinical
+characteristics increased the proportion of variation explained by 1.2% among Health
+Referral Regions, compared to adjustment for age and sex alone.*  However,
+substantial variation remained, with observed/expected ratios that ranged from
+`r round(min(smr_overall$smr3),2)` in Newark NJ to `r round(max(smr_overall$Smr3),2)` in Idaho
+Falls ID.  Ratios above 1.2 were primarily located in the upper Midwest, Great
+Plains, and mountain west, while ratios below 0.8 were more common in large
+urban centers.  Observed/expected ratios were higher in more rural areas, and
+were directly related to orthopedic surgeon density.  Rates of primary TKA among
+beneficiaries with dementia, peripheral vascular disease, and leg ulcers were
+also higher in Health Referral Regions with high observed/expected ratios, as
+were rates among younger beneficiaries with no comorbidities.  Among black
+beneficiaries, observed/expected ratios in 42 Health Referral Regions ranged
+from `r round(min(smr_black$smr3),2)` to `r round(max(smr_black$smr3),2)`.
+

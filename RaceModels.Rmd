@@ -1,0 +1,112 @@
+---
+title: "Models by race"
+author: "Abhijit Dasgupta"
+date: "4/5/2019"
+output: 
+  html_document:
+    toc: true   
+    theme: united
+    highlight: haddock
+    md_extensions: +definition_lists
+    pandoc_args: [
+      "--syntax-definition","/Users/abhijit/NIAMS/Ward/Medicare2015/documentation/sas.xml"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+# Splitting data
+
+We first split up the data by race
+
+
+
+```sas
+data sh026544.proj4_hrr_end15_white sh026544.proj4_hrr_end15_black sh026544.proj4_hrr_end15_hispanic
+  set sh026544.proj4_hrr_end15;
+  if (race = 1) then output sh026544.proj4_hrr_end15_white;
+  if (race = 2) then output sh026544.proj4_hrr_end15_black;
+  if (race = 3) then output sh026544.proj4_hrr_end15_hispanic;
+run;
+
+```
+
+
+We then use macros to split each race dataset up by years
+
+```sas
+%macro create_data(race);
+  %let dataset = %sysfunc(catx(%str(_), &race, &yr));
+  data sh026544.proj4_hrr_end15_&dataset_2011
+    sh026544.proj4_hrr_end15_&dataset_2012 sh026544.proj4_hrr_end15_&dataset_2013
+    sh026544.proj4_hrr_end15_&dataset_2014 sh026544.proj4_hrr_end15_&dataset_2015;
+  set sh026544.proj4_hrr_end15_&race;
+  if (bene_enrollmt_ref_yr = 2011) then output sh026544.proj4_hrr_end15_&dataset_2011;
+  if (bene_enrollmt_ref_yr = 2012) then output sh026544.proj4_hrr_end15_&dataset_2012;
+  if (bene_enrollmt_ref_yr = 2013) then output sh026544.proj4_hrr_end15_&dataset_2013;
+  if (bene_enrollmt_ref_yr = 2014) then output sh026544.proj4_hrr_end15_&dataset_2014;
+  if (bene_enrollmt_ref_yr = 2015) then output sh026544.proj4_hrr_end15_&dataset_2015;
+  run;
+%mend create_data;
+
+%macro create_datasets(race_list=);
+  %local i next_race;
+  %do i=1 %to %sysfunc(countw(&race_list));
+      %let next_race = %scan(&race, &i);
+      %create_data(&next_race);
+  %end;
+%mend create_datasets;
+
+%create_datasets(race_list = white black hispanic);
+```
+
+# Modeling
+
+We create macros for each of the three models:
+
+```sas
+%macro model1(race, yr);
+%let dataset=%sysfunc(catx(%str(_), &race, &yr));
+proc hpgenselect data = sh026544.proj4_hrr_end15_&dataset;
+title "Running model1, &dataset";
+  class male agecat;
+  model tka = agecat male agecat*male / dist = poisson, offset=ltime;
+  id bene_id;
+  output out=mod1_&dataset predicted=Predicted;
+run;
+proc sql;
+  create table mod1_&dataset as
+    select * from mod1_&dataset as a natural join 
+      sh026544.proj4_hrr_end15_&dataset as b 
+      where a.bene_id = b.bene_id;
+%mend model1;
+```
+
+The rest are done analogously.
+
+We then loop through the models:
+
+```sas
+%macro loop_through(race_list=, yr_list=);
+%local i j next_race next_yr;
+%do i=1 %to %sysfunc(countw(&race_list));
+  %do j=1 %to %sysfunc(countw(&yr_list));
+    %let next_race = %scan(&race_list, &i);
+    %let next_yr = %scan(&yr_list, &j);
+    %model1(&next_race, &next_yr);
+    %model2(&next_race, &next_yr);
+    %model3(&next_race, &next_yr);
+  %end;
+%end;
+%mend loop_through;
+
+%loop_through(race_list = white black hispanic, yr_list = 2011 2012 2013 2014 2015);
+```
+
+# Aggregation
+
+We're going to aggregate 
+
+
