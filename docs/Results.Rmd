@@ -1,4 +1,4 @@
----
+--
 title: "Results of Statistical Analysis"
 author: "Abhijit"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
@@ -22,6 +22,9 @@ theme_set(theme_bw() + theme(
   text = element_text(size = 10),
   axis.title = element_text(size = 10, face = 'bold')))
 doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
+
+library(fs)
+drop_dir <- path(ProjTemplate::find_dropbox(), 'NIAMS','Ward','Medicare2015')
 print(doc.type)
 ```
 
@@ -29,10 +32,10 @@ print(doc.type)
 ## RESULTS
 
 ```{r Results-1, message = F, warning = F}
-tka <- import('data/raw/TKAS2.csv') %>% 
+tka <- import(path(drop_dir,'raw/TKAS2.csv')) %>% 
   rename(year = BENE_ENROLLMT_REF_YR)
-overall_smr <- import('data/raw/PROJ4_OVERALL_SMR.csv')
-hrr_info <- sf::st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP',
+overall_smr <- import(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
+hrr_info <- sf::st_read(path(drop_dir, 'HRR_Bdry.SHP'),
                         quiet=TRUE)
 hrr_info2 <- hrr_info %>% as.data.frame() %>% 
   select(HRRNUM, HRRCITY) %>% 
@@ -60,8 +63,8 @@ generate the expected number of TKA. Because whites comprised 84.64% of the
 sample, our analyses focused on associations among whites.
 
 ```{r Results-2}
-poor <- import('data/raw/PROJ4_TKA_POOR.csv')
-dementia <- import('data/raw/PROJ4_TKA_DEMENTIA.csv')
+poor <- import(path(drop_dir,'raw/PROJ4_TKA_POOR.csv'))
+dementia <- import(path(drop_dir, 'raw/PROJ4_TKA_DEMENTIA.csv'))
 
 ```
 
@@ -104,8 +107,8 @@ were higher in HRRs with high OERs, as were rates among healthy 65 to 69
 year-olds (Figure 4).
 
 ```{r phys}
-phys <- read_csv('data/raw/phys_volume2.csv')
-smr_white <- read_csv('data/raw/PROJ4_SMR_WHITE.csv')
+phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
+smr_white <- read_csv(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
 phys <- phys %>% left_join(smr_white %>% select(hrr, smr3), by = c('hrrnum' = 'hrr'))
 phys_per_hrr <- phys %>% count(hrrnum)
 tka_per_phys <- phys %>% group_by(OP_PHYSN_NPI) %>% dplyr::summarize(N = sum(tka))
@@ -117,7 +120,7 @@ regardless of HRR performed between X and X TKA annually (Figure 6).
 Look for thresholds at 60.
 
 ```{r Results-3, echo = F}
-smr_black <- read_csv('data/raw/Black_SMR.csv')
+smr_black <- read_csv(path(drop_dir, 'raw/Black_SMR.csv'))
 smr_black_filt <- smr_black %>% filter(n > 15000)
 ```
 
@@ -144,8 +147,8 @@ library(tidyverse)
 library(rio)
 library(sf)
 
-smr_overall <- import('data/raw/PROJ4_OVERALL_SMR.csv') 
-hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP', quiet = TRUE)
+smr_overall <- import(path(drop_dir, 'raw/PROJ4_OVERALL_SMR.csv') )
+hrr_info <- st_read(path(drop_dir, 'HRR_Bdry.SHP'), quiet = TRUE)
 plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>% 
   # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>% 
   # mutate(SMR1 = ifelse(SMR1 >= 1.5, 1.5, SMR1))
@@ -179,7 +182,7 @@ rates.
 ```{r Results-5, fig.width=7.5}
 library(Hmisc)
 library(patchwork)
-smr_white <- import('data/raw/PROJ4_SMR_WHITE.csv')
+smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
 label(smr_white$rural_perc) <- 'Percent rural\n'
 label(smr_white$mean_op) <- 'Average number of \noutpatient visits per year'
 label(smr_white$mcare_adv_wtperc) <- 'Percentage with \nMedicare Advantage'
@@ -223,9 +226,9 @@ observed-to-expected ratio for rates of total knee arthroplasty among white
 Medicare beneficiaries in each Health Referral Region.
 
 ```{r Results-6}
-quarts <- rio::import('data/raw/PROJ4_MOD3_HRR_QUARTILES.csv') %>% as_tibble() %>%
+quarts <- rio::import(path(drop_dir, 'raw/PROJ4_MOD3_HRR_QUARTILES.csv')) %>% as_tibble() %>%
   mutate(smr = tka/exp3) %>% select(hrr, smr, quartile)
-smr_white <- rio::import('data/raw/PROJ4_SMR_WHITE.csv') %>% 
+smr_white <- rio::import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv')) %>% 
   select(hrr, smr3) %>% 
   mutate(quartile = 'Overall') %>% 
   mutate(smr_group = cut(smr3, quantile(smr3, c(0,0.05,0.4, 0.6, 0.95, 1)), 
@@ -277,7 +280,7 @@ stratified into quartiles from very low (on the left) to highest (on the right),
 and quartile-specific observed-to-expected ratios were computed for each region.
 
 ```{r Results-7}
-conditions <- import('data/raw/PROJ4_TKA_CONDITIONS.csv')
+conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS.csv'))
 conditions <- conditions %>% 
   filter(condition %in% c('dementia','pvd','ulcers','healthy')) %>% 
   mutate(condition = as.factor(condition)) %>% 
@@ -306,7 +309,7 @@ Referral Region.
 
 ```{r}
 library(rio)
-conditions <- import('data/raw/PROJ4_TKA_CONDITIONS.csv')
+conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS.csv'))
 conditions <- conditions %>% 
   filter(condition %in% c('dementia','pvd','ulcers','healthy')) %>% 
   mutate(condition = as.factor(condition)) %>% 
@@ -315,7 +318,7 @@ conditions <- conditions %>%
                                 'Peripheral vascular disease' = 'pvd',
                                 'Leg ulcers' = 'ulcers',
                                 'Healthy' = 'healthy'))
-ortho_prevalence <- import('data/raw/PROJ4_SMR_WHITE.csv') %>% 
+ortho_prevalence <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv')) %>% 
   select(hrr, ortho_per_100000)
 plot_dat <- left_join(conditions, ortho_prevalence)
 ggplot(plot_dat, aes(x = prop, y = ortho_per_100000)) + geom_point() + 
@@ -332,9 +335,9 @@ Figure 4a. Association between density of orthopedists and prevalence of dementi
 white Medicare beneficiaries by HRR
 
 ```{r Results-8}
-smr_black <- read_csv('data/raw/Black_SMR.csv') %>% 
+smr_black <- read_csv(path(drop_dir,'raw/Black_SMR.csv')) %>% 
   filter(n >= 15000)
-smr_white <- read_csv('data/raw/PROJ4_SMR_WHITE.csv')
+smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
 
 smrs <- bind_rows(smr_white, smr_black) %>% 
   mutate(race = ifelse(race == 1, 'White','Black')) %>%
@@ -374,7 +377,8 @@ black beneficiaries.
 
 
 ```{r}
-smr_black <- read_csv('data/raw/Black_SMR.csv') %>% 
+smr_black <- read_csv(path(drop_dir,'raw/Black_SMR.csv')):w
+%>% 
   filter(n >= 15000)
 ggplot(smr_black, aes(x = ortho_per_100000, y = smr3)) +
   geom_point() + geom_smooth(color = 'red', se = F) + 
@@ -393,8 +397,8 @@ library(kableExtra)
 library(sf)
 library(gt)
 library(flextable)
-overall_smr <- read_csv('data/raw/PROJ4_OVERALL_SMR.csv')
-hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP', quiet = TRUE) %>%
+overall_smr <- read_csv(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
+hrr_info <- st_read(path(drop_dir,'HRR_Bdry.SHP', quiet = TRUE)) %>%
   as_tibble() %>%
   select(HRRNUM, HRRCITY) %>% 
   separate(HRRCITY, c('State','City'), sep = '-', extra = 'merge') %>% 
@@ -406,7 +410,7 @@ top10 <- overall_smr %>%
 top10 <- top10 %>% 
   left_join(hrr_info, by = c('hrr' = 'HRRNUM'))
 
-races <- read_csv('data/raw/PROJ4_RACE.csv')
+races <- read_csv(path(drop_dir, 'raw/PROJ4_RACE.csv'))
 races <- races %>% spread(race, Percent) %>%
   set_names(c('HRR','White','Black','Hispanic','Asian','Other'))
 top10 <- top10 %>% left_join(races, by = c('hrr' = 'HRR')) %>%
@@ -446,7 +450,7 @@ suppressPackageStartupMessages(library(tidyverse))
 library(gt)
 library(flextable)
 if(doc.type != 'pdf'){
-suppl2 <- rio::import('data/raw/SupplTab2_2.csv')
+suppl2 <- rio::import(path(drop_dir, 'raw/SupplTab2_2.csv'))
 out <- suppl2 %>% select(-hrr) %>% 
   gather(variable, value) %>% 
   group_by(variable) %>% 
@@ -499,8 +503,8 @@ __Supplemental Table 2:__ Distribution of demographic and clinical characteristi
 ```{r Results-11, echo = F }
 library(tidyverse)
 
-overall <- read_csv('data/raw/PROJ4_OVERALL_SMR.csv')
-races <- read_csv('data/raw/PROJ4_RACE.csv')
+overall <- read_csv(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
+races <- read_csv(path(drop_dir, 'raw/PROJ4_RACE.csv'))
 races <- races %>% spread(race, Percent) %>%
   set_names(c('HRR','White','Black','Hispanic','Asian','Other'))
 
