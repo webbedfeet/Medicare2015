@@ -1,10 +1,10 @@
 ```{r, echo = F, message = F}
 library(tidyverse)
-smr_overall <- read_csv('data/raw/PROJ4_OVERALL_SMR.csv') %>% 
+smr_overall <- read_csv('../data/raw/PROJ4_OVERALL_SMR.csv') %>% 
   set_names(str_to_lower(names(.)))
-smr_black <- read_csv('data/raw/Black_SMR.csv') %>% 
+smr_black <- read_csv('../data/raw/Black_SMR.csv') %>% 
   filter(n > 15000)
-smr_white <- read_csv('data/raw/PROJ4_SMR_WHITE.csv')
+smr_white <- read_csv('../data/raw/PROJ4_SMR_WHITE.csv')
 ```
 
 
@@ -15,7 +15,7 @@ white beneficiaries, adjustment for demographic, socioeconomic, and clinical
 characteristics increased the proportion of variation explained by 1.2% among Health
 Referral Regions, compared to adjustment for age and sex alone.*  However,
 substantial variation remained, with observed/expected ratios that ranged from
-`r round(min(smr_overall$smr3),2)` in Newark NJ to `r round(max(smr_overall$Smr3),2)` in Idaho
+`r round(min(smr_white$smr3),2)` in Newark NJ to `r round(max(smr_white$smr3),2)` in Idaho
 Falls ID.  Ratios above 1.2 were primarily located in the upper Midwest, Great
 Plains, and mountain west, while ratios below 0.8 were more common in large
 urban centers.  Observed/expected ratios were higher in more rural areas, and
