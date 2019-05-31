@@ -174,7 +174,7 @@ plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>%
 
 plt1 <- 
   ggplot(plot_dat) +
-  geom_sf(aes(fill = SMR3)) + 
+  geom_sf(aes(fill = SMR3),  color = NA) + 
   scale_fill_gradient2(
     name = 'OER',
     trans = 'log',
@@ -623,7 +623,7 @@ plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>%
 
 plt11 <- 
   ggplot(plot_dat) +
-  geom_sf(aes(fill = SMR1)) + 
+  geom_sf(aes(fill = SMR1), color = NA) + 
   scale_fill_gradient2(
     name = 'OER',
     trans = 'log',
