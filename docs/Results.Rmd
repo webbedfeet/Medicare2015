@@ -1,10 +1,10 @@
---
+---
 title: "Results of Statistical Analysis"
 author: "Abhijit"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: 
   word_document:
-    toc: yes
+    reference_docx: ref_pgbrk.docx
   redoc::redoc:
     highlight_outputs: false
     comment_author: "Abhijit Dasgupta"
@@ -121,15 +121,19 @@ The number of TKA surgeons per HRR ranged from `r min(phys_per_hrr$n)` to
 `r max(phys_per_hrr$n)`.  The annual number of TKA performed varied widely, but
 the number and range of TKAs per surgeon was similar in high OER regions as in
 other regions (Supplemental figure 4).
+```{r, include=F}
+smr_black_filt <- import(path(drop_dir,'Black_SMR.csv')) %>% 
+  filter(n > 15000)
+```
 
-	Analyses in blacks, Hispanics, and Asians was limited by low representation
-	across HRRs.  Only six HRR included at least 15,000 Hispanic beneficiaries,
-	which corresponded to the lowest white HRR population in our study.  Forty-two
-	HRRs included at least 15,000 black beneficiaries.  OERs among blacks in these
-	HRRs ranged from `r round(min(smr_black_filt$smr1),2)` to 
-`r round(max(smr_black_filt$smr1),2)` (Supplemental table 5).  OERs in blacks and whites
-	in these regions were positively correlated, and generally higher among blacks
-	(Figure 5).
+Analyses in blacks, Hispanics, and Asians was limited by low representation
+across HRRs.  Only six HRR included at least 15,000 Hispanic beneficiaries,
+which corresponded to the lowest white HRR population in our study.  Forty-two
+HRRs included at least 15,000 black beneficiaries.  OERs among blacks in these
+HRRs ranged from `r round(min(smr_black_filt$smr1),2)` to 
+r round(max(smr_black_filt$smr1),2)` (Supplemental table 5).  OERs in blacks and whites
+in these regions were positively correlated, and generally higher among blacks
+(Figure 5).
 
 
 ## Hawaii
@@ -159,559 +163,49 @@ flextable(smr_hawaii) %>%
 
 
 
-## Figures
+#### Table 1.  Observed/expected ratios (OER) for primary total knee arthroplasty rates among white Medicare beneficiaries in the urban centers or outlying areas of selected Health Referral Regions.  Regions selected were those with a large geographic area, an urban center with a population of 100,000 or more, and an OER at the low, middle, or high end of the distribution.
 
-```{r Figure-1, include=F}
-library(tidyverse)
-library(rio)
-library(sf)
+```{r Table-1}
+d <- read_csv(path(drop_dir, 'raw/PROJ4_SMR_RURAL_URBAN.csv'))
+hrr_info <- sf::st_read(path(drop_dir, 'HRR_Bdry.SHP'), quiet=T) %>% 
+  as_tibble() %>% 
+  select(HRRNUM, HRRCITY, -geometry) %>% 
+  separate(HRRCITY, c('State','City'), sep = '-', extra='merge') %>% 
+  mutate(City = str_to_title(str_trim(City))) %>% 
+  unite('Location', c('City','State'), sep = ', ')
 
-smr_overall <- import(path(drop_dir, 'raw/PROJ4_OVERALL_SMR.csv') )
-hrr_info <- st_read(path(drop_dir, 'HRR_Bdry.SHP'), quiet = TRUE)
-plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>% 
-  # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>% 
-  # mutate(SMR1 = ifelse(SMR1 >= 1.5, 1.5, SMR1))
-
-plt1 <- 
-  ggplot(plot_dat) +
-  geom_sf(aes(fill = SMR3),  color = NA) + 
-  scale_fill_gradient2(
-    name = 'OER',
-    trans = 'log',
-    breaks = c(0.75, 1, 1.33 ),
-    # limits = c(0.67, 1.5),
-     high = 'red', mid = '#ffffbf', low = 'green', midpoint = 0) +
-  coord_sf(label_graticule = 'SW', crs = 4286)
-
-# plt2 <- plt1 + coord_sf(xlim = c(-80, -70), ylim = c(40,45)) +
-#   theme(legend.position = 'none',
-#         axis.text = element_blank(),
-#         axis.ticks = element_blank())
+d1 <- d %>% mutate(city = ifelse(city == 0, 'Rural','Urban')) %>%
+  select(hrrnum, city, smr3, location) %>%
+  spread(city, smr3) %>%
+  mutate(Difference = Rural - Urban) %>%
+  arrange(Urban)
 
 
-ggsave('Result_Graphs/map_model3.pdf', plot = plt1)
-```
+d2 <- d %>% select(hrrnum, overall_smr) %>% distinct()
+d3 <- d1 %>% left_join(d2) %>%
+  arrange(overall_smr) %>%
+  rename('Overall OER' = 'overall_smr')
 
-_This plot is available as a separate file, since it takes long to render_
+d4 <- d %>% filter(city==1) %>% select(hrrnum, Percent)
+d3 <- d3 %>% left_join(d4) %>% rename('Percent Urban'= 'Percent')
 
-__Figure 1.__  Observed-to-expected ratios for rates of total knee arthroplasties
-among white Medicare beneficiaries age 65 to 89 in 2011-2015, by Health Referral
-Region.  Ratios greater than 1.0 indicate higher than expected rates of total
-knee arthroplasty, while ratios less than 1.0 indicate lower than expected
-rates. 
+d3 <- d3 %>% 
+  left_join(hrr_info, by = c('hrrnum'='HRRNUM')) %>% 
+  select(Location, `Percent Urban`, `Overall OER`, Urban, Rural, Difference, -location, -hrrnum) %>% 
+  mutate(`Percent Urban` = as.numeric(str_replace(`Percent Urban`, '%','')))
 
-```{r Figure-2}
-library(Hmisc)
-library(patchwork)
-smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
-label(smr_white$rural_perc) <- 'Percent rural\n'
-label(smr_white$mean_op) <- 'Average number of \noutpatient visits per year'
-label(smr_white$mcare_adv_wtperc) <- 'Percentage with \nMedicare Advantage'
-label(smr_white$ortho_per_100000) <- 'Number of orthopedists \nper 100000 beneficiaries'
-label(smr_white$mean_koa_visits) <- 'Average number of \nknee visits per person per year'
-label(smr_white$frac_koa) <- 'Fraction of people with \nat least one knee visit a year'
-plot_fn <- function(variable){
-  vrbl <- enquo(variable)
-  ggplot(smr_white, aes(x = !!vrbl, y = smr3))+
-    geom_point()+
-    geom_smooth(se = F, color = 'red') +
-    geom_hline(yintercept = 1, linetype = 2) +
-    labs(x = label(smr_white[[ensym(vrbl)]]),
-         y = 'Observed/Expected ratio (OER)') +
-    theme_bw() +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 12, face = 'bold'),
-          axis.title.y = element_blank())
-}
-
-p0 <- plot_fn(rural_perc)
-p1 <- plot_fn(mean_op)
-p2 <- plot_fn(mcare_adv_wtperc)
-p3 <- plot_fn(ortho_per_100000)
-p4 <- plot_fn(mean_koa_visits)
-p5 <- plot_fn(frac_koa) + scale_x_continuous(labels=scales::percent_format())
-
-plt <- ggpubr::ggarrange(p0,p1,p2,p3,p4,p5, ncol = 3, nrow = 2) 
-(final_plt <- ggpubr::annotate_figure(plt, 
-    left = ggpubr::text_grob('Observed/Expected ratio (OER)', 
-                             rot = 90, size = 12, face = 'bold'))
-)
-
-```
-
-__Figure 2.__  Associations between the percent of beneficiaries living in rural
-areas, the number of outpatient visits for knee complaints, the percent of
-beneficiaries in Medicare Advantage plans, and the number of surgeons performing
-total knee arthroplasties per 10,000 beneficiaries in the and the
-observed-to-expected ratio for rates of total knee arthroplasty among white
-Medicare beneficiaries in each Health Referral Region.
-
-```{r Results-6}
-quarts <- rio::import(path(drop_dir, 'raw/PROJ4_MOD3_HRR_QUARTILES.csv')) %>% as_tibble() %>%
-  mutate(smr = tka/exp3) %>% select(hrr, smr, quartile)
-smr_white <- rio::import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv')) %>% 
-  select(hrr, smr3) %>% 
-  mutate(quartile = 'Overall') %>% 
-  mutate(smr_group = cut(smr3, quantile(smr3, c(0,0.05,0.4, 0.6, 0.95, 1)), 
-                         include.lowest = T))
-levels(smr_white$smr_group) <- str_split(levels(smr_white$smr_group), ',') %>% 
-  map(~str_replace(., '\\(|\\)|\\[|\\]','')) %>% 
-  map(as.numeric) %>% 
-  map(~paste(round(., 2), collapse = '-')) %>% 
-  unlist()
-levels(smr_white$smr_group) <- paste(c('Very low','Low','Middle','High',
-                                       'Very high'), 
-                                     levels(smr_white$smr_group),
-                                     sep = ': ')
-
-blah <- quarts %>% bind_rows(smr_white %>% 
-                               select(-smr_group) %>% 
-                               rename(smr = smr3)) %>% 
-  filter(!is.na(smr)) # Adding the overall SMR values to the dataset
-blah <- blah %>% 
-  left_join(smr_white %>% 
-              select(hrr, smr_group)) %>%  # Adding the SMR groups to the dataset
-  mutate(quartile = as_factor(quartile)) %>% 
-  mutate(quartile = fct_recode(quartile,
-                               "Low" = "q1",
-                               "Low-middle" = "q2",
-                               "High-middle" = "q3",
-                               "High" = 'q4')) %>% 
-  mutate(quartile = fct_relevel(quartile, 'Low','Low-middle', 'High-middle',
-                                'High','Overall'))
-
-ggplot(blah, aes(x = quartile,y = smr, color = smr_group)) +
-  geom_line(aes(group = hrr), alpha = 0.7) + 
-  geom_point() + 
-  theme(legend.position = 'bottom',
-        legend.text = element_text(size = 10)) +
-  guides(color = guide_legend(nrow = 2, byrow = TRUE )) +
-  labs(x = 'Quartile groups of patients based on expected probability of knee surgery',
-       y = 'Probability quartile specific OER',
-       color = 'HRR-specific overall OER quartiles') + 
-  coord_cartesian(ylim = c(0,5))
-
-
-```
-
-__Figure 3.__ Observed-to-expected ratios for rates of total knee arthroplasty in
-each Health Referral Region among white Medicare beneficiaries, stratified by
-beneficiary's expected probability of total knee arthroplasty.  Expected probabilities were
-stratified into quartiles from very low (on the left) to highest (on the right),
-and quartile-specific observed-to-expected ratios were computed for each region.
-
-```{r Results-7}
-conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS.csv'))
-conditions <- conditions %>% 
-  filter(condition %in% c('dementia','pvd','ulcers','healthy')) %>% 
-  mutate(condition = as.factor(condition)) %>% 
-  mutate(condition = fct_recode(condition, 
-                                'Dementia' = 'dementia',
-                                'Peripheral vascular disease' = 'pvd',
-                                'Leg ulcers' = 'ulcers',
-                                'Healthy' = 'healthy'))
-ggplot(conditions, aes(x = prop, y = smr3)) + 
-  geom_point() + 
-  geom_smooth(se = F, color = 'red') + 
-  geom_hline(yintercept = 1, linetype = 2) +
-  facet_wrap(~ condition, scales = 'free_x') +
-  labs( x = 'Prevalence per 1000 subjects', 
-        y = 'Observed/Expected Ratio (OER)') + 
-  theme(text = element_text(size = 14))
-
-```
-
-__Figure 4.__  Associations between rates of total knee arthroplasty among white
-Medicare beneficiaries with either dementia, peripheral vascular disease, leg
-ulcers, or who were age 65 to 69 with no comorbidities and the
-observed-to-expected ratio for rates of total knee arthroplasty by Health
-Referral Region.
-
-
-```{r Figure-4a}
-library(rio)
-conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS.csv'))
-conditions <- conditions %>% 
-  filter(condition %in% c('dementia','pvd','ulcers','healthy')) %>% 
-  mutate(condition = as.factor(condition)) %>% 
-  mutate(condition = fct_recode(condition, 
-                                'Dementia' = 'dementia',
-                                'Peripheral vascular disease' = 'pvd',
-                                'Leg ulcers' = 'ulcers',
-                                'Healthy' = 'healthy'))
-ortho_prevalence <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv')) %>% 
-  select(hrr, ortho_per_100000)
-plot_dat <- left_join(conditions, ortho_prevalence)
-ggplot(plot_dat, aes(x = prop, y = ortho_per_100000)) + geom_point() + 
-  geom_point() + 
-  geom_smooth(se = F, color = 'red') + 
-  facet_wrap(~ condition, scales = 'free_x') +
-  labs( x = 'Prevalence per 1000 subjects', 
-        y = 'Number of orthopedists per 100,000 beneficiaries') + 
-  theme_bw()
-```
-
-__Figure 4a.__ Association between density of orthopedists and prevalence of demential pvd, leg ulcers or healthy individuals among
-white Medicare beneficiaries by HRR
-
-```{r Results-8}
-smr_black <- read_csv(path(drop_dir,'raw/Black_SMR.csv')) %>% 
-  filter(n >= 15000)
-smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
-
-smrs <- bind_rows(smr_white, smr_black) %>% 
-  mutate(race = ifelse(race == 1, 'White','Black')) %>%
-  mutate(race = as_factor(race)) %>% 
-  # mutate(race = fct_relevel('White')) %>% 
-  select(hrr, race, smr3, ortho_per_100000)
-
-smrs %>% select(-ortho_per_100000) %>% 
-  spread(race, smr3) %>% 
-  ggplot(aes(White, Black)) + 
-  geom_point() + 
-  geom_smooth(se=F, color = 'red', method = 'lm') + 
-  geom_abline(linetype = 2) + 
-  coord_equal(xlim = c(0.6, 1.3), ylim = c(0.6, 1.3)) + 
-  theme_bw() + 
-  theme(text = element_text(size = 12),
-        axis.title = element_text(face = 'bold'))
-# ggplot(smrs, aes(x = ortho_per_100000, y = smr3, group = race, color = race)) +
-#   geom_point(alpha = 0.5) + geom_smooth(se = F) +
-#   # scale_y_log10() +
-#   geom_hline(yintercept = 1, linetype = 2) +
-#   # scale_color_manual(values = c('White'='black','Black' = 'blue')) + 
-#   labs(x = 'Number of surgeons performing TKA\nper 10,000 beneficiaries',
-#        y = 'Observed/Expected ratio (OER)',
-#        color = 'Race') + 
-#   theme(text = element_text(size = 14))
-```
-
-
-__Figure 5.__  Association between the observed-to-expected ratios for rates of
-total knee arthroplasty between white and black 
-Medicare beneficiaries.  Associations between the observed-to-expected ratios
-for rates of total knee arthroplasty in white and black Medicare
-beneficiaries and the number of surgeons performing total knee arthroplasties
-per 10,000 beneficiaries in the Health Referral Region. HRRs for blacks are restricted to those with at least 15,000
-black beneficiaries. 
-
-
-```{r}
-smr_black <- read_csv(path(drop_dir,'raw/Black_SMR.csv')) %>% 
-  filter(n >= 15000)
-ggplot(smr_black, aes(x = ortho_per_100000, y = smr3)) +
-  geom_point() + geom_smooth(color = 'red', se = F) + 
-  geom_hline(yintercept = 1, linetype = 2) +
-  labs(x = 'Number of orthopedists \nper 100000 beneficiaries',
-       y = 'Observed/Expected ratio (OER)')
-```
-
-__Figure 6.__  Association of the OER among blacks with the number of orthopedists 
-per 100000 beneficiaries in a HRR. 
-
-# Supplemental materials
-
-## Tables
-
-```{r Results-9}
-library(kableExtra)
-library(sf)
-library(gt)
-library(flextable)
-overall_smr <- read_csv(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
-hrr_info <- st_read(path(drop_dir,'HRR_Bdry.SHP', quiet = TRUE)) %>%
-  as_tibble() %>%
-  select(HRRNUM, HRRCITY) %>% 
-  separate(HRRCITY, c('State','City'), sep = '-', extra = 'merge') %>% 
-  mutate(City = str_to_title(str_trim(City)))
-
-top10 <- overall_smr %>% 
-  arrange(SMR1) %>% 
-  slice(1:10, (n() - 9):n())
-top10 <- top10 %>% 
-  left_join(hrr_info, by = c('hrr' = 'HRRNUM'))
-
-races <- read_csv(path(drop_dir, 'raw/PROJ4_RACE.csv'))
-races <- races %>% spread(race, Percent) %>%
-  set_names(c('HRR','White','Black','Hispanic','Asian','Other'))
-top10 <- top10 %>% left_join(races, by = c('hrr' = 'HRR')) %>%
-  select(hrr, SMR1, City, State, White:Other) %>% 
-  mutate_at(vars(White:Other), ~./100)
-
-if(doc.type == 'pdf'){
-gt(top10) %>%
-  tab_row_group(group = "Lowest 10", rows = 1:10) %>%
-  tab_row_group(group = 'Highest 10', rows = 11:20) %>%
-  fmt_number(vars(SMR1), decimals = 2) %>%
-  fmt_percent(vars(White,Black,Hispanic,Asian,Other)) %>%
-  cols_label(hrr = "HRR",
-             SMR1 = "OER")
-} else {
-top10 <- top10 %>%  mutate_at(vars(White:Other), ~.*100) %>% 
-  add_row(hrr='Lowest 10', .before = 1) %>% 
-  add_row(hrr='Highest 10', .after = 11)
-  
-ft <- flextable(top10)
-ft <- set_header_labels(ft, SMR1 = 'OER', hrr='HRR')
-ft <- colformat_int(x = ft, col_keys = c('hrr'))
-ft <- colformat_num(x = ft, col_keys = c('White','Black','Hispanic','Asian','Other'),
-                    digits=2, suffix = "%")
-fp1 <- officer::fp_border()
-ft <- hline(ft, i = c(1, 11, 12,22), border = fp1)
-ft <- bold(ft, part = 'header')
-ft
-}
-```
-
-__Supplemental Table 1:__ Racial composition in the HRRs with the highest and 
-lowest OER when adjusted for age, race and sex
-
-```{r Results-10}
-suppressPackageStartupMessages(library(tidyverse))
-library(gt)
-library(flextable)
-if(doc.type != 'pdf'){
-suppl2 <- rio::import(path(drop_dir, 'raw/SupplTab2_2.csv'))
-out <- suppl2 %>% select(-hrr) %>% 
-  gather(variable, value) %>% 
-  group_by(variable) %>% 
-  dplyr::summarize(Min = min(value), `10%` = quantile(value, 0.1),
-            Median = median(value),
-            `90%` = quantile(value, 0.9),
-            Max = max(value))
-ind <- which(out$Max >=1)
-ind1 <- setdiff(1:nrow(out), ind)
-var_perc <- out$variable[ind1]
-var_num <- out$variable[ind]
-
-out1 <- out %>% mutate_at(vars(Min:Max),
-                          ~ifelse(out$Max >= 1, ., 100*.))
-colvars <- out %>% select(Min:Max) %>% names()
-
-grp1 <- c('age','race', 'male')
-grp3 <- c('kneesymptoms','knee_patient','op_visits')
-grp4 <- c('obese','physjob','smoking')
-grp5 <- c('mcare','ortho','poor','zscore','rural')
-grp2 <- setdiff(out1$variable, c(grp1,grp3,grp4,grp5))
-grps <- c(grp1, grp2, grp3, grp4, grp5)
-
-varlabs <- c('age'='Age', 'race' = 'Percent white', 'acutemi' = 'Acute MI', 
-             'afib' = 'Atrial fibrilation', 'breast' = 'Breast Cancer','chf' = 'Chronic heart failure',
-             'ckd' = 'Chronic kidney disease', 'colorectal' = 'Colorectal cancer', 
-             'copd' = 'COPD', 'dementia' = 'Dementia', 'depress' = 'Depression',
-             'diab' = 'Diabetes mellitus', 'endometrial_past' = 'Endometrial cancer', 
-             'hememalignancy'='Heme malignancy', 'hiv' = 'HIV', 'ihd' = 'Ischemic heart disease',
-             'koa' = 'Any knee OA visit', 
-             'liver' = 'Liver disease', 'lung' = 'Lung cancer', 'male' = 'Gender: Male', 
-             'prostate' = 'Prostate cancer', 'pvd' = 'Peripheral vasuclar disease',
-             'stroke' = 'Stroke', 'ulcers' = 'Leg ulcers', 
-             'kneesymptoms'= 'Knee symptoms','knee_patient' = 'Knee patient', 
-             'op_visits' = 'Outpatient visits', 'obese' = 'Percent Obese', 'physjob'='Percent with physical occupation',
-             'smoking' = 'Percent smokers', 'mcare' = 'Percent with Medicare Advantage', 
-             'ortho' = 'Density of orthopedic surgeons','poor' = 'Poor', 'zscore' = 'SES score',
-             'rural' = 'Rural residence')
-
-out1 <- out1[match(grps, out1$variable ),]
-out1$Variable = varlabs[out1$variable]
-out1 <- out1 %>% select(Variable, everything(), -variable)
-
-if(doc.type != 'pdf'){
-ft1 <- flextable(out1) %>% 
-  colformat_num(col_keys = colvars, 
+ft <- flextable(d3) %>% 
+  # theme_box() %>% 
+  colformat_num(col_keys = names(d3)[3:6],
                 digits = 2) %>% 
-  colformat_num(col_keys = colvars, 
-                i = match(varlabs[var_perc], out1$Variable),
-                suffix = '%') %>% 
-  bold(part = 'header')
-ft1
-} else {
-
-out <- out[match(grps, out$variable ),]
-out <- out %>% mutate(variable = varlabs[variable])
-gt(out) %>%
-  fmt_percent(columns = 2:6, rows = match(varlabs[var_perc], out$variable)) %>%
-  fmt_number(columns = 2:6, rows = match(varlabs[var_num], out$variable), decimal = 2)
-}
-```
-
-__Supplemental Table 2:__ Distribution of demographic and clinical characteristics across HRRs
-
-```{r Results-3-bis}
-library(kableExtra)
-library(sf)
-library(gt)
-library(flextable)
-white_smr <- read_csv('../data/raw/PROJ4_SMR_WHITE.csv')
-hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP', quiet = TRUE) %>%
-  as_tibble() %>%
-  select(HRRNUM, HRRCITY) %>% 
-  separate(HRRCITY, c('State','City'), sep = '-', extra = 'merge') %>% 
-  mutate(City = str_to_title(str_trim(City)))
-
-top10 <- white_smr %>% 
-  arrange(smr3) %>% 
-  slice(1:10, (n() - 9):n())
-top10 <- top10 %>% 
-  left_join(hrr_info, by = c('hrr' = 'HRRNUM'))
-top10 <- top10 %>% 
-  select(hrr, City, State, smr3) 
-
-
-if(doc.type == 'pdf'){
-gt(top10) %>%
-  tab_row_group(group = "Lowest 10", rows = 1:10) %>%
-  tab_row_group(group = 'Highest 10', rows = 11:20) %>%
-  fmt_number(vars(smr3), decimals = 2) %>% 
-  cols_label(hrr = "HRR",
-             smr3 = "OER")
-} else {
-top10 <- top10 %>%  
-  add_row(hrr='Lowest 10', .before = 1) %>% 
-  add_row(hrr='Highest 10', .after = 11)
-  
-ft <- flextable(top10)
-ft <- set_header_labels(ft, smr3 = 'OER', hrr='HRR')
-ft <- colformat_int(x = ft, col_keys = c('hrr'))
-ft <- colformat_num(x = ft, col_keys = c('smr3'),
-                    digits=2)
-fp1 <- officer::fp_border()
-ft <- hline(ft, i = c(1, 11, 12,22), border = fp1)
-ft <- bold(ft, part = 'header')
+  colformat_num(col_keys=c('Percent Urban'), digits=1) %>% 
+  align(j = 2:5, align='center', part='all') %>% 
+  set_header_labels(values = c("Percent Urban" = "Percent of \nbeneficiaries living in\n the urban center",
+                               "Urban" = 'OER urban center',
+                               "Rural" = 'OER outlying area',
+                               'Difference' = 'OER difference',
+                               'Location' = 'Heath Referral\n Region')) %>% 
+  autofit()
 ft
-}
-
 ```
 
-__Supplemental Table 4:__ Top and bottom 10 HRRs based on white-only analyses (Model 3)
-
-```{r Results-4-bis}
-library(tidyverse)
-library(rio)
-smr_black <- import('../data/raw/Black_SMR.csv') %>% 
-  filter(n > 15000) %>% 
-  select(hrr, smr3)
-hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP', quiet = TRUE) %>%
-  as_tibble() %>%
-  select(HRRNUM, HRRCITY) %>% 
-  separate(HRRCITY, c('State','City'), sep = '-', extra = 'merge') %>% 
-  mutate(City = str_to_title(str_trim(City)))
-smr_black <- smr_black %>% left_join(hrr_info, by=c('hrr'='HRRNUM')) %>% 
-  select(hrr,City, State,smr3) %>% 
-  arrange(smr3)
-flextable::flextable(smr_black) %>% 
-  set_header_labels(hrr='HRR', smr3='OER') %>% 
-  bold(part='header')
-```
-
-
-
-
-__Supplemental Table 5:__ OERs based only on Blacks in the 42 HRRs with at least 15,000 Black beneficiaries
-
-## Figures
-
-```{r Suppl-Figure-1, include=F}
-library(tidyverse)
-library(rio)
-library(sf)
-
-smr_overall <- import('../data/raw/PROJ4_OVERALL_SMR.csv') 
-hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP', quiet = TRUE)
-plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>% 
-  # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>% 
-  # mutate(SMR1 = ifelse(SMR1 >= 1.5, 1.5, SMR1))
-
-plt11 <- 
-  ggplot(plot_dat) +
-  geom_sf(aes(fill = SMR1), color = NA) + 
-  scale_fill_gradient2(
-    name = 'OER',
-    trans = 'log',
-    breaks = c(0.75, 1, 1.33 ),
-    # limits = c(0.67, 1.5),
-    high = 'red', mid = '#ffffbf', low = 'green', midpoint = 0) +
-  coord_sf(label_graticule = 'SW', crs = 4286)
-
-# plt2 <- plt1 + coord_sf(xlim = c(-80, -70), ylim = c(40,45)) +
-#   theme(legend.position = 'none',
-#         axis.text = element_blank(),
-#         axis.ticks = element_blank())
-
-ggsave('Result_Graphs/map_model1.pdf', plot = plt11)
-```
-
-_This plot is available separately due to long rendering times_
-
-__Supplemental Figure 1:__ Map of OER across HRRs based on age, sex and race adjustment
-
-```{r Suppl-Figure-2}
-library(tidyverse)
-
-overall <- read_csv(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
-races <- read_csv(path(drop_dir, 'raw/PROJ4_RACE.csv'))
-races <- races %>% spread(race, Percent) %>%
-  set_names(c('HRR','White','Black','Hispanic','Asian','Other'))
-
-overall2 <- overall %>% left_join(races, by = c('hrr' = 'HRR')) %>% 
-  mutate_at(vars(White:Other), ~./100) %>% 
-  select(-Other) %>% 
-  gather(race, value, White:Asian) %>% 
-  mutate(race = as_factor(race)) 
-
-plt <- ggplot(overall2, aes(x = value, y = SMR1)) +
-  geom_point() + geom_smooth(color = 'red', se = F) +
-  facet_wrap(~race, scales = 'free_x') + 
-  geom_hline(yintercept = 1, linetype = 2) + 
-  scale_x_continuous(name = 'Percentage in a HRR', 
-                     labels = scales::percent_format()) + 
-  labs(y = 'Observed/Expected ratio (OER)') +
-  theme_bw() + 
-  theme(text = element_text(size = 12),
-        axis.title = element_text(face = 'bold'))
-plot(plt)
-```
-
-__Supplemental Figure 2:__ Association of OER based on age, race and sex adjustment with racial composition in the HRR
-
-
-```{r Suppl-Figure-3}
-source(here::here('lib','R','split_violin.R'))
-smrs <- import('../data/raw/PROJ4_OVERALL_SMR.csv') %>% 
-  select(SMR1, SMR3) %>% gather()
-ggplot(smrs, 
-       aes(x = 1, y = value, fill = key)) + 
-  geom_split_violin() +
-  geom_hline(yintercept = 1, linetype = 2) +
-  scale_y_log10(name = 'Observed/Expected ratio (OER)',
-                breaks = c(0.7, 1, 1.4)) + 
-  theme(legend.position = 'none',
-        axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank())
-```
-
-__Supplemental Figure 3:__ Contrasting distributions of OERs based on Model 1 (left/red) and Model 3 (right/blue). 
-
-
-```{r Suppl-Figure-4}
-library(ggridges)
-phys <- read_csv('../data/raw/phys_volume2.csv')
-smr_white <- read_csv('../data/raw/PROJ4_SMR_WHITE.csv')
-phys <- phys %>% left_join(smr_white %>% select(hrr, smr3), by = c('hrrnum' = 'hrr'))
-phys <- phys %>% mutate(hrrnum = factor(hrrnum)) %>% 
-  mutate(hrrnum  = fct_reorder(hrrnum, smr3),
-         tka = tka/5)
-
-ggplot(phys, aes(x = tka, y = hrrnum,  fill = smr3)) +
-  geom_density_ridges(scale = 20, rel_min_height = 0.05) +
-  theme_ridges() +
-  scale_x_log10(breaks = 10^(0:3)) + 
-  scale_fill_gradient2(name = 'OER', trans = 'log', breaks = c(0.7, 1, 1.4),
-                       low = 'blue', high = 'red', mid = 'white') +
-  labs(x = 'Annual TKA volume per surgeon', y = 'HRR') + 
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        panel.grid.major.y = element_blank())
-```
-
-__Supplemental Figure 4:__ A ridgeline plot of the distributions of surgeon TKA volume per year in 2011-2015 by Hospital Referral Region (HRR)

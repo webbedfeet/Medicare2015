@@ -1,4 +1,10 @@
-## Figures
+---
+title: Figures
+output:
+  html_document: default
+  word_document: 
+    reference_docx: ref_pgbrk.docx
+---
 
 ```{r setup, include = F}
 library(tidyverse)
@@ -187,7 +193,7 @@ conditions <- conditions %>%
                                 'Dementia' = 'dementia',
                                 'Peripheral\n vascular disease' = 'pvd',
                                 'Leg ulcers' = 'ulcers',
-                                'Healthy' = 'healthy',
+                                'No comorbidity' = 'healthy',
                                 'Depression' = 'depression',
                                 'Congestive\nHeart Failure' = 'chf')) 
 ggplot(conditions, aes(x = prop, y = smr3)) + 
@@ -195,7 +201,7 @@ ggplot(conditions, aes(x = prop, y = smr3)) +
   geom_smooth(se = F, color = 'red') + 
   geom_hline(yintercept = 1, linetype = 2) +
   facet_wrap(~ condition, scales = 'free_x', nrow=2) +
-  labs( x = 'Prevalence per 1000 subjects', 
+  labs( x = 'Incidence of TKA per 1000 among those with condition', 
         y = 'Observed/Expected Ratio (OER)') + 
   theme(text = element_text(size = 14))
 
@@ -270,5 +276,9 @@ ggplot(smr_black, aes(x = ortho_per_100000, y = smr3)) +
   geom_hline(yintercept = 1, linetype = 2) +
   labs(x = 'Number of TKA surgeons \nper 100,000 beneficiaries',
        y = 'Observed/Expected ratio (OER)')
+```
+
+```{r post, inlcude=F, message=F, results = 'hide'}
+ProjTemplate::pdf2tiff(here::here('docs','Result_Graphs'))
 ```
 
