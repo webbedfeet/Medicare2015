@@ -6,9 +6,11 @@
 #'
 #+ include = F
 library(tidyverse)
+library(fs)
+drop_dir <- path(ProjTemplate::find_dropbox(), 'NIAMS','Ward','Medicare2015')
 #'
 #+ echo = F, message = F
-d <- read_csv('data/raw/PROJ4_SMR_RURAL_URBAN.csv')
+d <- read_csv(path(drop_dir, 'raw/PROJ4_SMR_RURAL_URBAN.csv'))
 
 d1 <- d %>% mutate(city = ifelse(city == 0, 'Rural','Urban')) %>%
   select(hrrnum, city, smr3, location) %>%
@@ -26,5 +28,5 @@ d3 <- d1 %>% left_join(d2) %>%
   mutate(location = ifelse(location=='Slc', 'Salt Lake City', location))
 
 d4 <- d %>% filter(city==1) %>% select(hrrnum, Percent)
-d3 <- d3 %>% left_join(d4) %>% rename('Percent White'= 'Percent')
+d3 <- d3 %>% left_join(d4) %>% rename('Percent Urban'= 'Percent')
 knitr::kable(d3, format='pandoc', digits = 2)
