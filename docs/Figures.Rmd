@@ -91,7 +91,7 @@ library(patchwork)
 smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
 label(smr_white$rural_perc) <- 'Percent rural\n'
 label(smr_white$mean_op) <- 'Average number of \noutpatient visits per year'
-label(smr_white$mcare_adv_wtperc) <- 'Percentage with \nMedicare Advantage'
+label(smr_white$mcare_adv_wtperc) <- 'Percentage with \nMedicare Managed Care'
 label(smr_white$ortho_per_100000) <- 'Number of TKA surgeons\nper 100,000 beneficiaries'
 label(smr_white$mean_koa_visits) <- 'Mean annual knee visits\n per person'
 label(smr_white$frac_koa) <- 'Fraction of people with \nat least one knee visit a year'
