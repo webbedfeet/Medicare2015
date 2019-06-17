@@ -11,6 +11,7 @@ library(tidyverse)
 library(rio)
 library(sf)
 library(fs)
+library(here)
 
 knitr::opts_chunk$set(echo = FALSE, warning = F, message = F, cache = F,
                       fig.path = 'Result_Graphs/', dev = c('png','pdf'),
@@ -31,9 +32,9 @@ map_scale_fill <- function(...){
   name = 'OER',
   trans = 'log2',
   labels = function(x){round(x,2)},
-  high = 'red',
-  low = 'green',
-  mid = '#ffffbf',
+  high = '#ff0000',
+  low = '#003300',
+  mid = '#ffff00',
   midpoint = 0,
   ...)
 }
@@ -42,9 +43,9 @@ map_scale_color <- function(...){
   name = 'OER',
   trans = 'log2',
   labels = function(x){round(x,2)},
-  high = 'red',
-  low = 'green',
-  mid = '#ffffbf',
+ high = '#ff0000',
+  low = '#003300',
+  mid = '#ffff00',
   midpoint = 0,
   ...)
 }
@@ -78,7 +79,7 @@ plt1 <-
 
 
 
-ggsave('Result_Graphs/Figure-1-1.pdf', plot = plt1)
+ggsave(here('docs','Result_Graphs/Figure-1-1.pdf'), plot = plt1)
 ```
 
 _This plot is available as a separate file, since it takes long to render_
@@ -183,7 +184,7 @@ plt
 ```{r Figure-4}
 conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS.csv'))
 depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
-  mutate(condition='depression')
+  mutate(condition='depression') %>% mutate(prop = prop*1000)
 conditions <- bind_rows(conditions,depr)
 conditions <- conditions %>% 
   filter(condition != 'poorrisk') %>% 
@@ -200,7 +201,7 @@ ggplot(conditions, aes(x = prop, y = smr3)) +
   geom_point() + 
   geom_smooth(se = F, color = 'red') + 
   geom_hline(yintercept = 1, linetype = 2) +
-  facet_wrap(~ condition, scales = 'free_x', nrow=2) +
+  facet_wrap(~ condition, nrow=2, scales = 'free_x') +
   labs( x = 'Incidence of TKA per 1000 among those with condition', 
         y = 'Observed/Expected Ratio (OER)') + 
   theme(text = element_text(size = 14))
@@ -213,7 +214,7 @@ ggplot(conditions, aes(x = prop, y = smr3)) +
 ```{r Figure-4a}
 conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS.csv'))
 depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
-  mutate(condition='depression')
+  mutate(condition='depression') %>% mutate(prop = prop * 1000)
 conditions <- bind_rows(conditions,depr)
 conditions <- conditions %>% 
   filter(condition != 'poorrisk') %>% 
@@ -232,7 +233,7 @@ plot_dat <- left_join(conditions, ortho_prevalence)
 ggplot(plot_dat, aes(x = prop, y = ortho_per_100000)) + geom_point() + 
   geom_point() + 
   geom_smooth(se = F, color = 'red') + 
-  facet_wrap(~ condition, scales = 'free_x', nrow = 2) +
+  facet_wrap(~ condition, , nrow = 2) +
   labs( x = 'Prevalence per 1000 subjects', 
         y = 'Number of orthopedists per 100,000 beneficiaries') + 
   theme_bw()
