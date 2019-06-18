@@ -1,9 +1,9 @@
 ---
 title: Supplemental Material
 output:
+  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
-  html_document: default
 ---
 
 
@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = F, message = F, cache = F,
 library(tidyverse)
 library(rio)
 library(fs)
+if(!dir_exists('Result_Graphs')) dir_create('Result_Graphs')
 
 theme_set(theme_bw() + theme(
   text = element_text(size = 10),
@@ -92,7 +93,7 @@ knitr::include_graphics(stringr::str_replace(pdffile, 'pdf','png'))
 ```{r Results-9}
 library(kableExtra)
 library(sf)
-library(gt)
+# library(gt)
 library(flextable)
 overall_smr <- read_csv(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
 hrr_info <- st_read(path(drop_dir,'HRR_Bdry.SHP'), quiet = TRUE) %>%
@@ -170,7 +171,7 @@ plot(plt)
 
 ```{r Results-10}
 suppressPackageStartupMessages(library(tidyverse))
-library(gt)
+# library(gt)
 library(flextable)
 
 suppl2 <- rio::import(path(drop_dir, 'raw/SupplTab2_2.csv'))
@@ -181,7 +182,7 @@ out <- suppl2 %>% select(-hrr) %>%
             Median = median(value),
             `90%` = quantile(value, 0.9),
             Max = max(value))
-ind <- which(out$Max >=1)
+ind <- which(out$Max >= 1)
 ind1 <- setdiff(1:nrow(out), ind)
 var_perc <- out$variable[ind1]
 var_num <- out$variable[ind]
@@ -238,7 +239,7 @@ ft1
 
 ```{r Suppl-Figure-3}
 source(here::here('lib','R','split_violin.R'))
-smrs <- import('../data/raw/PROJ4_SMR_WHITE.csv') %>% 
+smrs <- import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv')) %>% 
   select(smr1, smr3) %>% gather()
 ggplot(smrs, 
        aes(x = 1, y = value, fill = key)) + 
@@ -355,8 +356,8 @@ ft
 
 ```{r Suppl-Figure-4, cache = TRUE}
 library(ggridges)
-phys <- read_csv('../data/raw/phys_volume2.csv')
-smr_white <- read_csv('../data/raw/PROJ4_SMR_WHITE.csv')
+phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
+smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
 phys <- phys %>% left_join(smr_white %>% select(hrr, smr3), by = c('hrrnum' = 'hrr'))
 phys <- phys %>% mutate(hrrnum = factor(hrrnum)) %>% 
   mutate(hrrnum  = fct_reorder(hrrnum, smr3),
@@ -385,8 +386,8 @@ _This was included in Supplemental Table 4_
 #### Figure 5. Association of the proportion of white TKA recepients with dementia, depression, CHF, PVD, leg ulcers or no comorbidities with the observed-to-expected ratio for rates of TKA, by Health Referral Region. 
 
 ```{r Suppl-Figure-5}
-comorb_tka <- import('../data/raw/PROJ4_COMORB_TKA_WHITE.csv')
-smr_white <- import('../data/raw/PROJ4_SMR_WHITE.csv') %>% 
+comorb_tka <- import(path(drop_dir, 'raw/PROJ4_COMORB_TKA_WHITE.csv'))
+smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv')) %>% 
   select(hrr, smr3)
 comorb_tka <- comorb_tka %>% left_join(smr_white)
 comorb_tka1 <- comorb_tka %>% gather(variable, value, dementia:healthy) %>% 
@@ -420,7 +421,29 @@ ProjTemplate::pdf2tiff(here::here('docs','Result_Graphs'))
 #### Figure 6. Relative number of excess TKA done on patients with no comorbidities and patients with contraindications. Numbers give the estimated number of excess TKA performed in each HRR for each subgroup. Excess TKA is in comparison to HRRs with OER between 0.99 and 1.01.  
 
 
-```{r Suppl-Figure-6, out.height=10.5, out.width=7.5}
+```{r Suppl-Figure-6, fig.height=9, fig.width=7.5}
+mid_hrr <- smr_white %>% filter(smr3 > 0.99, smr3 < 1.01) %>% pull(hrr)
+
+excess_tka <- function(hrr1, condition_name) {
+  dat <- conditions_white %>%
+    filter(condition==condition_name) %>%
+    filter(hrr %in% c(hrr1, mid_hrr)) %>%
+    mutate(Group = ifelse(hrr %in% mid_hrr, 'mid', 'high'))
+
+  base_rate <- dat %>% filter(Group=='mid') %>%
+    summarize(rate = sum(num)/sum(denom)*1000) %>% pull(rate)
+
+  dat %>% group_by(Group) %>%
+    summarize(py = sum(denom), rate = sum(num)/sum(denom)*1000) %>%
+    mutate(rate_diff = -diff(rate)) %>%
+    filter(Group=='high') %>%
+    mutate(excess_tka = py * rate_diff/1000,
+           excess_tka_per_yr = excess_tka / 5,
+           hrr = hrr1,
+           base_rate = base_rate,
+           condition = condition_name) %>%
+    select(hrr, condition, rate, base_rate, rate_diff, excess_tka_per_yr)
+}
 smr_white <- import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
 conditions_white <- import(path(drop_dir,'raw/PROJ4_TKA_CONDITIONS_june.csv')) %>%
   bind_rows(import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>%
@@ -463,7 +486,8 @@ ggplot(results2, aes(x = Location, y = excess_tka_per_yr, fill = condition))+
   theme_bw() +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.minor.y  = element_blank(),
-        axis.text.y = element_text(size = 8),
+        axis.text.y = element_text(size = 8, color='black'),
+        axis.title = element_text(color='black'),
         axis.ticks.y = element_blank(),
         legend.title = element_blank()) +
   coord_flip()
