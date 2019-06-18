@@ -187,16 +187,17 @@ depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>%
   mutate(condition='depression') %>% mutate(prop = prop*1000)
 conditions <- bind_rows(conditions,depr)
 conditions <- conditions %>% 
-  filter(condition != 'poorrisk') %>% 
+  filter(condition %in% c('dementia','pvd','ulcers','healthy')) %>% 
   mutate(condition = as.factor(condition)) %>% 
-  mutate(condition = fct_relevel(condition, 'dementia','pvd','ulcers','depression','chf','healthy')) %>% 
+  mutate(condition = fct_relevel(condition, 'dementia','pvd','ulcers','healthy')) %>% 
   mutate(condition = fct_recode(condition, 
                                 'Dementia' = 'dementia',
                                 'Peripheral\n vascular disease' = 'pvd',
                                 'Leg ulcers' = 'ulcers',
                                 'No comorbidity' = 'healthy',
-                                'Depression' = 'depression',
-                                'Congestive\nHeart Failure' = 'chf')) 
+                                # 'Depression' = 'depression',
+                                # 'Congestive\nHeart Failure' = 'chf'
+                                )) 
 ggplot(conditions, aes(x = prop, y = smr3)) + 
   geom_point() + 
   geom_smooth(se = F, color = 'red') + 
