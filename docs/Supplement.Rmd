@@ -1,9 +1,9 @@
 ---
 title: Supplemental Material
 output:
-  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
+  html_document: default
 ---
 
 
@@ -76,9 +76,18 @@ plt11 <-
 #         axis.text = element_blank(),
 #         axis.ticks = element_blank())
 
+plt12 <- ggplotGrob(
+  plt11 + coord_sf(xlim = c(-78,-71), ylim = c(38,43), crs=4286) + 
+  theme(legend.position = 'none',
+        axis.text = element_blank() , axis.ticks = element_blank())
+)
+
+plt13 <- plt11 + 
+  annotation_custom(grob = plt12, xmin =-78, xmax = -63, ymin = 23, ymax = 33)
+
 pdffile <- fs::path_rel(here::here('docs','Result_Graphs','Suppl-Figure-1-1.pdf'))
 ggsave(pdffile,
-       plot = plt11)
+       plot = plt13)
 x <- magick::image_read_pdf(pdffile)
 magick::image_write(x, stringr::str_replace(pdffile, 'pdf','png'))
 knitr::include_graphics(stringr::str_replace(pdffile, 'pdf','png'))
@@ -368,10 +377,10 @@ excess_tka <- function(hrr1, condition_name) {
     mutate(Group = ifelse(hrr %in% mid_hrr, 'mid', 'high'))
 
   base_rate <- dat %>% filter(Group=='mid') %>%
-    summarize(rate = sum(num)/sum(denom)*1000) %>% pull(rate)
+    dplyr::summarize(rate = sum(num)/sum(denom)*1000) %>% pull(rate)
 
   dat %>% group_by(Group) %>%
-    summarize(py = sum(denom), rate = sum(num)/sum(denom)*1000) %>%
+    dplyr::summarize(py = sum(denom), rate = sum(num)/sum(denom)*1000) %>%
     mutate(rate_diff = -diff(rate)) %>%
     filter(Group=='high') %>%
     mutate(excess_tka = py * rate_diff/1000,
@@ -446,15 +455,16 @@ comorb_tka %>% filter(condition %in% c('depress','chf','diabetes')) %>%
                                 'Depression' = 'depress',
                                 'Congestive\nHeart Failure' = 'chf',
                                 'Diabetes Mellitus' = 'diabetes')) %>% 
-  ggplot(aes(x = smr3, y = prop/100)) + 
+  ggplot(aes(y = smr3, x = prop)) + 
   geom_point() + 
   geom_smooth(color='red', se = F) + 
-  scale_x_log10(breaks = c(0.7, 1, 1/0.7),
-                labels = scales::number_format(accuracy=0.01)) + 
-  scale_y_continuous(labels = scales::percent_format(accuracy=1)) +
-  facet_wrap(~condition, nrow=1) +
-  labs(x = 'Observed/Expected Ratio (full model, whites)',
-       y = 'Proportion of TKA patients with condition')
+  # scale_y_(breaks = c(0.7, 1, 1/0.7),
+  #               labels = scales::number_format(accuracy=0.01)) + 
+  scale_x_continuous( breaks = seq(10,60, by=10)) + 
+  facet_wrap(~condition, nrow=1, scales='free_x') +
+ labs( x = 'Incidence of TKA per 1000 among those with condition', 
+        y = 'Observed/Expected Ratio (OER)') + 
+  theme(text = element_text(size = 14))
 
 
 # comorb_tka1 <- comorb_tka %>% gather(variable, value, dementia:healthy) %>% 
