@@ -1,9 +1,9 @@
 ---
 title: Supplemental Material
 output:
+  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
-  html_document: default
 ---
 
 
@@ -76,18 +76,10 @@ plt11 <-
 #         axis.text = element_blank(),
 #         axis.ticks = element_blank())
 
-plt12 <- ggplotGrob(
-  plt11 + coord_sf(xlim = c(-78,-71), ylim = c(38,43), crs=4286) + 
-  theme(legend.position = 'none',
-        axis.text = element_blank() , axis.ticks = element_blank())
-)
-
-plt13 <- plt11 + 
-  annotation_custom(grob = plt12, xmin =-78, xmax = -63, ymin = 23, ymax = 33)
 
 pdffile <- fs::path_rel(here::here('docs','Result_Graphs','Suppl-Figure-1-1.pdf'))
 ggsave(pdffile,
-       plot = plt13)
+       plot = plt11)
 x <- magick::image_read_pdf(pdffile)
 magick::image_write(x, stringr::str_replace(pdffile, 'pdf','png'))
 knitr::include_graphics(stringr::str_replace(pdffile, 'pdf','png'))
