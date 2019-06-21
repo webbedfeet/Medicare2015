@@ -436,15 +436,13 @@ ggplot(results2, aes(x = Location, y = excess_tka_per_yr, fill = condition))+
 
 ```{r Suppl-Figure-5}
 comorb_tka <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
-depression <- import(path(drop_dir, 'raw/PROJ4_COMORB_TKA_WHITE.csv')) %>% 
-  select(hrr, depress) %>% mutate(depress = depress*100)
-comorb_tka <- comorb_tka %>% select(hrr, prop, smr3, condition) %>% 
-  spread(condition, prop) %>% 
-  left_join(depression) %>% 
-  gather(condition, prop, -hrr, -smr3)
-comorb_tka %>% filter(condition %in% c('depress','chf','diabetes')) %>% 
+depression <-  import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
+  mutate(condition='depression') %>% mutate(prop = prop*1000)
+comorb_tka <- bind_rows(comorb_tka, depression)
+  
+comorb_tka %>% filter(condition %in% c('depression','chf','diabetes')) %>% 
   mutate(condition = fct_recode(condition, 
-                                'Depression' = 'depress',
+                                'Depression' = 'depression',
                                 'Congestive\nHeart Failure' = 'chf',
                                 'Diabetes Mellitus' = 'diabetes')) %>% 
   ggplot(aes(y = smr3, x = prop)) + 
