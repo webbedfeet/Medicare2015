@@ -1,9 +1,9 @@
 ---
 title: Supplemental Material
 output:
-  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
+  html_document: default
 ---
 
 

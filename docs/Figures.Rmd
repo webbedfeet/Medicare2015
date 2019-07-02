@@ -1,9 +1,9 @@
 ---
 title: Figures
 output:
-  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
+  html_document: default
 ---
 
 ```{r setup, include = F}
@@ -85,7 +85,11 @@ plt12 <- ggplotGrob(
 )
 
 plt13 <- plt11 + 
-  annotation_custom(grob = plt12, xmin =-78.8, xmax = -63.8, ymin = 22.5, ymax = 32.5)
+  
+  annotation_custom(grob = plt12, xmin =-78.8, xmax = -63.8, ymin = 22.5, 
+                    ymax = 32.5) +
+  annotate('rect', xmax = -71.5, xmin = -76, ymax = 42, ymin = 39.5,
+           alpha = 0.3)
 
 
 pdffile <- fs::path_rel(here::here('docs','Result_Graphs','Figure-1-1.pdf'))
