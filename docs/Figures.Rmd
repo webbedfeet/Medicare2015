@@ -58,17 +58,17 @@ map_scale_color <- function(...){
 
 ```{r Figure-1, echo = F, include=T}
 
-smr_overall <- import(path(drop_dir, 'raw/PROJ4_OVERALL_SMR.csv') )
+smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv') )
 hrr_info <- st_read(path(drop_dir, 'HRR_Bdry.SHP'), quiet = TRUE)
-plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>% 
+plot_dat <- smr_white %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>% 
   # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>% 
   # mutate(SMR1 = ifelse(SMR1 >= 1.5, 1.5, SMR1))
 
 
 plt11 <- 
   ggplot(plot_dat) +
-  geom_sf(aes(geometry = geometry, fill = SMR3),  color = NA) + 
-  map_scale_fill(breaks = c(min(plot_dat$SMR3),  1, max(plot_dat$SMR3)))+
+  geom_sf(aes(geometry = geometry, fill = smr3),  color = NA) + 
+  map_scale_fill(breaks = c(min(plot_dat$smr3),  1, max(plot_dat$smr3)))+
   # scale_fill_gradient2(
   #   name = 'OER',
   #   trans = 'log2',
