@@ -211,7 +211,7 @@ varlabs <- c('age'='Mean age, years', 'acutemi' = 'Acute myocardial infarction',
              'koa' = 'Any knee osteoarthritis visit', 
              'liver' = 'Liver disease', 'lung' = 'Lung cancer, ever', 'male' = 'Men', 
              'prostate' = 'Prostate cancer, ever', 'pvd' = 'Peripheral vasuclar disease',
-             'stroke' = 'Stroke', 'ulcers' = 'Leg ulcers', 
+             'stroke' = 'Stroke', 'ulcers' = 'Skin ulcers', 
              'kneesymptoms'= 'Knee symptoms','knee_patient' = 'Knee symptoms or knee osteoarthritis', 
              'op_visits' = 'Outpatient visits', 'obese' = 'Percent obese', 'physjob'='Percent with physical occupation',
              'smoking' = 'Percent smokers', 'mcare' = 'Percent with Medicare managed care', 
@@ -296,7 +296,7 @@ varlabs <- c('acutemi' = 'Acute myocardiar infarction',
              'prostate_past' = 'Prostate cancer, ever',
              'pvd' = 'Peripheral vasuclar disease',
              'stroke' = 'Stroke', 
-             'ulcers' = 'Leg ulcers', 
+             'ulcers' = 'Skin ulcers', 
              'kneesymptoms'= 'Knee symptoms',
              'knee_patient' = 'Knee symptoms or osteoarthritis', 
              'op_visits' = 'Outpatient visits', 
@@ -355,9 +355,9 @@ ft <- flextable(smr_white %>% select(-hrr), cwidth=1.5) %>%
 ft
 ```
 
-#### Supplemental Figure 4.  Excess annual number of total knee arthroplasties among white beneficiaries age 65 to 69 without comorbidities (blue) and white beneficiaries with either dementia, peripheral vascular disease, or leg ulcers (pink) in the 63 Health Referral Regions with an observed/expected ratio of 1.2 or higher.  The length of each bar represents the relative proportion of each group.  The numbers at the ends of each bar indicate the raw number of arthroplasties over that expected based on rates among similar beneficiaries in regions with an observed/expected ratio of 0.90 to 1.01 (as the reference group).  To derive these, we first computed the risk difference between the incidence of TKA in each Health Referral Region and the pooled incidence in the reference group of Health Referral Regions for beneficiaries age 65 to 69 without comorbidities.  We then multiplied the risk difference of each region by its population of beneficiaries age 65 to 69 without comorbidities to give the excess number of total knee arthroplasties in this group.  We then repeated this process for beneficiaries with either dementia, peripheral vascular disease, or leg ulcers.  Health Referral Regions with no data had lower incidences of total knee arthroplasty among these two groups of beneficiaries than the reference group, despite having high overall observed/expected ratios.
+<!-- #### Supplemental Figure 4.  Excess annual number of total knee arthroplasties among white beneficiaries age 65 to 69 without comorbidities (blue) and white beneficiaries with either dementia, peripheral vascular disease, or leg ulcers (pink) in the 63 Health Referral Regions with an observed/expected ratio of 1.2 or higher.  The length of each bar represents the relative proportion of each group.  The numbers at the ends of each bar indicate the raw number of arthroplasties over that expected based on rates among similar beneficiaries in regions with an observed/expected ratio of 0.90 to 1.01 (as the reference group).  To derive these, we first computed the risk difference between the incidence of TKA in each Health Referral Region and the pooled incidence in the reference group of Health Referral Regions for beneficiaries age 65 to 69 without comorbidities.  We then multiplied the risk difference of each region by its population of beneficiaries age 65 to 69 without comorbidities to give the excess number of total knee arthroplasties in this group.  We then repeated this process for beneficiaries with either dementia, peripheral vascular disease, or leg ulcers.  Health Referral Regions with no data had lower incidences of total knee arthroplasty among these two groups of beneficiaries than the reference group, despite having high overall observed/expected ratios. -->
 
-```{r Suppl-Figure-4, fig.height=9.5, fig.width=7.5}
+```{r Suppl-Figure-4-del, fig.height=9.5, fig.width=7.5, eval = F, echo = F}
 
 smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
 mid_hrr <- smr_white %>% filter(smr3 > 0.99, smr3 < 1.01) %>% pull(hrr)
@@ -432,9 +432,9 @@ ggplot(results2, aes(x = Location, y = excess_tka_per_yr, fill = condition))+
 
 ```
 
-#### Associations between rates of total knee arthroplasty among beneficiaries with depression, congestive heart failure, or diabetes mellitus and the observed/expected ratio for rates of primary total knee arthroplasty among white Medicare beneficiaries in each Health Referral Region.
+<!-- #### Associations between rates of total knee arthroplasty among beneficiaries with depression, congestive heart failure, or diabetes mellitus and the observed/expected ratio for rates of primary total knee arthroplasty among white Medicare beneficiaries in each Health Referral Region. -->
 
-```{r Suppl-Figure-5}
+```{r Suppl-Figure-5-del, echo = F, eval = F}
 comorb_tka <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
 depression <-  import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
   mutate(condition='depression') %>% mutate(prop = prop*1000)
@@ -463,7 +463,7 @@ comorb_tka %>% filter(condition %in% c('depression','chf','diabetes')) %>%
 #   mutate(variable = fct_recode(variable,
 #                                'Dementia' = 'dementia',
 #                                 'Peripheral\n vascular disease' = 'pvd',
-#                                 'Leg ulcers' = 'ulcers',
+#                                 'Skin ulcers' = 'ulcers',
 #                                 'No comorbidity' = 'healthy',
 #                                 'Depression' = 'depress',
 #                                 'Congestive\nHeart Failure' = 'chf')) 
@@ -480,9 +480,9 @@ comorb_tka %>% filter(condition %in% c('depression','chf','diabetes')) %>%
 ```
 
 
-#### Figure 6. Mean annual number of primary total knee arthroplasties performed per surgeon among white Medicare beneficiaries, by Health Referral Region. Regions are ordered from low to high based on their observed/expected ratio.
+#### Supplemental Figure 4. Mean annual number of primary total knee arthroplasties performed per surgeon among white Medicare beneficiaries, by Health Referral Region. Regions are ordered from low to high based on their observed/expected ratio.
 
-```{r Suppl-Figure-6, cache = TRUE}
+```{r Suppl-Figure-4, cache = FALSE}
 library(ggridges)
 phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
 smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
