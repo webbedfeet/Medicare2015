@@ -1,9 +1,9 @@
 ---
 title: Figures
 output:
+  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
-  html_document: default
 ---
 
 ```{r setup, include = F}
@@ -135,7 +135,8 @@ p3 <- plot_fn(ortho_per_100000)
 p4 <- plot_fn(mean_koa_visits)
 p5 <- plot_fn(frac_koa) + scale_x_continuous(labels=scales::percent_format())
 
-plt <- ggpubr::ggarrange(p4,p0,p2,p3, ncol = 2, nrow = 2) 
+plt <- ggpubr::ggarrange(p0, p4, p1, p2, p3, ncol = 3, nrow = 2)
+# plt <- ggpubr::ggarrange(p4,p0,p2,p3, ncol = 2, nrow = 2) 
 (final_plt <- ggpubr::annotate_figure(plt, 
     left = ggpubr::text_grob('Observed/Expected ratio (OER)', 
                              rot = 90, size = 12, face = 'bold'))

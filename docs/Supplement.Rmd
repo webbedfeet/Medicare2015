@@ -1,9 +1,9 @@
 ---
 title: Supplemental Material
 output:
+  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
-  html_document: default
 ---
 
 
@@ -486,7 +486,8 @@ comorb_tka %>% filter(condition %in% c('depression','chf','diabetes')) %>%
 library(ggridges)
 phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
 smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
-phys <- phys %>% left_join(smr_white %>% select(hrr, smr3), by = c('hrrnum' = 'hrr'))
+phys <- phys %>% left_join(smr_white %>% select(hrr, smr3, py), by = c('hrrnum' = 'hrr')) %>% 
+  rename('pyears' = 'py.y')
 phys <- phys %>% mutate(hrrnum = factor(hrrnum)) %>% 
   mutate(hrrnum  = fct_reorder(hrrnum, smr3),
          tka = tka/5)
@@ -498,7 +499,7 @@ ggplot(phys, aes(x = tka, y = hrrnum,  fill = smr3)) +
   map_scale_fill(breaks = c(min(phys$smr3), 1, max(phys$smr3)))+
   # scale_fill_gradient2(name = 'OER', trans = 'log', breaks = c(0.7, 1, 1.4),
                        # low = 'blue', high = 'red', mid = 'white') +
-  labs(x = 'Annual TKA volume per surgeon', y = 'HRR') + 
+  labs(x = 'Annual TKA volume per surgeon', y = '') + 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         panel.grid.major.y = element_blank())
