@@ -487,7 +487,7 @@ library(ggridges)
 phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
 smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
 phys <- phys %>% left_join(smr_white %>% select(hrr, smr3, py), by = c('hrrnum' = 'hrr')) %>% 
-  rename('pyears' = 'py.y')
+  rename('pyears' = 'py.y', 'py'='py.x')
 phys <- phys %>% mutate(hrrnum = factor(hrrnum)) %>% 
   mutate(hrrnum  = fct_reorder(hrrnum, smr3),
          tka = tka/5)
@@ -506,6 +506,56 @@ ggplot(phys, aes(x = tka, y = hrrnum,  fill = smr3)) +
 ```
 
 
+```{r, Suppl-Figure-4a, eval = F}
+phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
+smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
+phys <- phys %>% left_join(smr_white %>% select(hrr, smr3, py), by = c('hrrnum' = 'hrr')) %>% 
+  rename('pyears' = 'py.y', 'py'='py.x')
+phys <- phys %>% mutate(hrrnum = factor(hrrnum)) %>% 
+  mutate(hrrnum  = fct_reorder(hrrnum, smr3),
+         tka = tka/5)
+bl <- phys %>% count(hrrnum, smr3, tka) %>% 
+  mutate(tka_cat = cut(tka, c(0,10,20, 30, 40, 50, 500), include.lowest = T, right=F)) %>% 
+  mutate(tka_cat = fct_recode(tka_cat, '0-9.9' = '[0,10)', '10-19.9'='[10,20)',
+                              '20-29.9' = '[20,30)', '30-39.9' = '[30,40)', 
+                              '40-49.9' = '[40,50)', '50+' = '[50,500]'))
+bl2 <- bl %>% count(hrrnum,tka_cat) %>% group_by(hrrnum) %>% mutate(pct = 100*n/sum(n)) %>% ungroup()
+ggplot(bl2, aes(x = hrrnum, y = n, fill = tka_cat)) + 
+  geom_bar(stat='identity', position = 'fill') + 
+  # scale_x_continuous(expand = c(0,0)) +
+  scale_fill_brewer(palette='YlGnBu') + 
+  theme_bw() + 
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = c(0,0))+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_blank()) + 
+  labs(x= 'Low  <<<<   Observed/Expected Ratio >>>> High', 
+       y = 'Percentage within HRR',
+       fill = 'Annual TKA volume') 
+## Need better color scales
+
+bl3 <- bl2 %>% left_join(smr_white %>% mutate(hrr = fct_reorder(factor(hrr),smr3)) %>% select(hrr, smr3), by= c('hrrnum' = 'hrr'))
+ggplot(bl3, aes(x = smr3, y = pct, color = tka_cat))+geom_point() + geom_smooth(se=F) + labs(x = 'Observed/Expected Ratio', y = 'Percentage of orthopedic surgeons within HRR', color = 'TKA volume per year')
+
+bl4 <- phys %>% group_by(OP_PHYSN_NPI) %>% summarize(tka_vol = sum(tka)) %>% ungroup() %>% 
+  mutate(tka_mod = ifelse(tka_vol >= 10, 1, 0),
+         tka_high = ifelse(tka_vol >= 60, 1, 0),
+         tka_low = ifelse(tka_vol < 1, 1, 0))
+
+phys2 <- left_join(phys, select(bl4, -tka_vol))
+
+blah <- phys2 %>% group_by(hrrnum, smr3) %>% 
+  summarize(done_by_low = sum(tka * tka_low)/sum(tka) * 100,
+            done_by_mod = sum(tka * tka_mod)/sum(tka) * 100,
+            done_by_high = sum(tka * tka_high)/sum(tka) *100) %>% 
+  ungroup()
+
+blah2 <- blah %>% select(smr3, done_by_low, done_by_high) %>% gather(group, perc, -smr3) %>% 
+  mutate(group = ifelse(group =='done_by_low', '< 1', '> 60'))
+ggplot(blah2, aes(smr3, perc, color = group)) + geom_point() + geom_smooth(se = F) + 
+  labs (x = 'Observed/Expected Ratio', y = 'Percentage of TKA within HRR', color = 'Surgeon TKA annual volume')
+```
 
 
 
