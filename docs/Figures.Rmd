@@ -181,14 +181,14 @@ blah <- blah %>% left_join(blah2)
 plt <- ggplot(blah, aes(x = quartile,y = smr, color = smr_overall)) +
   geom_line(aes(group = hrr), alpha = 0.2) + 
   geom_point() +
+  scale_y_log10()+
   map_scale_color(breaks = c(min(blah$smr_overall),  1, max(blah$smr_overall)))+
-  theme(legend.position = c(.8,.8),
+  theme(legend.position = c(.8,0.2),
         legend.text = element_text(size = 10),
         axis.text = element_text(face='bold')) +
   labs(x = 'Quartile groups of patients based on\n expected probability of knee surgery',
        y = 'Probability quartile specific OER',
-       color = 'HRR-specific overall OER quartiles') + 
-  coord_cartesian(ylim = c(0,5))
+       color = 'HRR-specific overall OER quartiles')
 
 plt
 ```
