@@ -7,4 +7,5 @@
 *_files/*
 outputs/*
 data/*
-docs/*
+docs/Result_Graphs/*
+docs/Supplement_cache/*

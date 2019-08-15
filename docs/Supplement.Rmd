@@ -1,9 +1,9 @@
 ---
 title: Supplemental Material
 output:
+  html_document: default
   word_document: 
     reference_docx: ref_pgbrk.docx
-  html_document: default
 ---
 
 
@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = F, message = F, cache = F,
 library(tidyverse)
 library(rio)
 library(fs)
+if(!dir_exists('Result_Graphs')) dir_create('Result_Graphs')
 
 theme_set(theme_bw() + theme(
   text = element_text(size = 10),
@@ -29,9 +30,9 @@ map_scale_fill <- function(...){
   name = 'OER',
   trans = 'log2',
   labels = function(x){round(x,2)},
-  high = 'red',
-  low = 'green',
-  mid = '#ffffbf',
+  high = '#ff0000',
+  low = '#003300',
+  mid = '#ffff00',
   midpoint = 0,
   ...)
 }
@@ -40,19 +41,20 @@ map_scale_color <- function(...){
   name = 'OER',
   trans = 'log2',
   labels = function(x){round(x,2)},
-  high = 'red',
-  low = 'green',
-  mid = '#ffffbf',
+ high = '#ff0000',
+  low = '#003300',
+  mid = '#ffff00',
   midpoint = 0,
   ...)
 }
+
 ```
 
 
 #### Figure 1. Observed/expected ratios for rates of primary total knee arthroplasty among Medicare beneficiaries age 65 to 89 in 2011-2015, by Health Referral Region. Expected rates were based on models that adjusted for age, sex, and race-ethnicity.
 
 
-```{r Suppl-Figure-1, include=F, cache = TRUE}
+```{r Suppl-Figure-1, echo = F,  cache = TRUE}
 library(sf)
 
 smr_overall <- import(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
@@ -63,7 +65,7 @@ plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>%
 
 plt11 <- 
   ggplot(plot_dat) +
-  geom_sf(aes(fill = SMR1), color = NA) + 
+  geom_sf(aes(geometry = geometry, fill = SMR1), color = NA) + 
   map_scale_fill(
     breaks = c(min(plot_dat$SMR1), 1, max(plot_dat$SMR1))
   ) +
@@ -74,7 +76,8 @@ plt11 <-
 #         axis.text = element_blank(),
 #         axis.ticks = element_blank())
 
-pdffile <- here::here('docs','Result_Graphs','Suppl-Figure-1-1.pdf')
+
+pdffile <- fs::path_rel(here::here('docs','Result_Graphs','Suppl-Figure-1-1.pdf'))
 ggsave(pdffile,
        plot = plt11)
 x <- magick::image_read_pdf(pdffile)
@@ -86,13 +89,13 @@ knitr::include_graphics(stringr::str_replace(pdffile, 'pdf','png'))
 
 ```
 
-#### Table 1. Race/ethnicity composition of the 10 Health Referral Regions with the lowest and highest observed/expected ratios for rates of primary total knee arthroplasty.
+#### Table 1. Race/ethnicity composition of the ten Health Referral Regions with the lowest and highest observed/expected ratios for rates of primary total knee arthroplasty. Percentages may not add to 100% due to rounding
 
 
-```{r Results-9}
+```{r Suppl-Table-1}
 library(kableExtra)
 library(sf)
-library(gt)
+# library(gt)
 library(flextable)
 overall_smr <- read_csv(path(drop_dir,'raw/PROJ4_OVERALL_SMR.csv'))
 hrr_info <- st_read(path(drop_dir,'HRR_Bdry.SHP'), quiet = TRUE) %>%
@@ -116,20 +119,22 @@ top10 <- top10 %>% left_join(races, by = c('hrr' = 'HRR')) %>%
   unite(Location, c('City','State'), sep = ', ') %>% 
   mutate(Group = rep(c('Lowest 10', 'Highest 10'), c(10,10)))
 
+top10 <- do.call(rbind, list(top10[1:10,], rep(NA, ncol(top10)), top10[11:20,]))
 
+race_names <- names(select(top10, White:Other))
+race_names <- setNames(paste('%', race_names), race_names)
 top10 %>% 
-  mutate_at(vars(White:Other), ~.*100) %>% 
-  as_grouped_data(groups = c('Group')) %>% 
-  as_flextable() %>% 
-  compose(i = ~!is.na(hrr), j = 'hrr', 
-          value = as_paragraph(
-            as_chunk(hrr, formater = function(x) sprintf('%.0f',x))
-          )) %>% 
+  mutate_at(vars(White:Other), ~.*100) %>% as_tibble() %>% 
+  # as_grouped_data(groups = c('Group')) %>% 
+  select(Location, SMR1, White:Other) %>% 
+  flextable() %>% 
   colformat_num(col_keys = c('White','Black','Hispanic','Asian','Other'),
-                digits=2, suffix = '%') %>% 
-  border(i = 12, border.top = officer::fp_border(color='black')) %>% 
-  bold(i = ~is.na(hrr), j = 'hrr') %>% 
-  set_header_labels('SMR1' = 'OER','hrr' = 'HRR') %>% 
+                digits=1) %>% 
+  colformat_num(col_keys = 'SMR1', digits = 2) %>% 
+  border(i = 11:12, border.top = officer::fp_border(color='black')) %>% 
+  # bold(i = ~is.na(hrr), j = 'hrr') %>% 
+  set_header_labels('SMR1' = 'Observed/expected ratio','Location' = 'Health Referral Region') %>% 
+  set_header_labels(values = race_names) %>% 
   bold(part = 'header') %>% 
   autofit()
 
@@ -166,11 +171,11 @@ plt <- ggplot(overall2, aes(x = value, y = SMR1)) +
 plot(plt)
 ```
 
-#### Table 2. Distribution of demographic and clinical characteristics of white Medicare beneficiaries among Health Referral Regions.
+#### Table 2. Distribution of demographic and clinical characteristics of white Medicare beneficiaries among Health Referral Regions. Values are percentages, except age, number of outpatient visits and area-based socioeconomic score
 
 ```{r Results-10}
 suppressPackageStartupMessages(library(tidyverse))
-library(gt)
+# library(gt)
 library(flextable)
 
 suppl2 <- rio::import(path(drop_dir, 'raw/SupplTab2_2.csv'))
@@ -181,7 +186,7 @@ out <- suppl2 %>% select(-hrr) %>%
             Median = median(value),
             `90%` = quantile(value, 0.9),
             Max = max(value))
-ind <- which(out$Max >=1)
+ind <- which(out$Max >= 1)
 ind1 <- setdiff(1:nrow(out), ind)
 var_perc <- out$variable[ind1]
 var_num <- out$variable[ind]
@@ -190,27 +195,27 @@ out1 <- out %>% mutate_at(vars(Min:Max),
                           ~ifelse(out$Max >= 1, ., 100*.))
 colvars <- out %>% select(Min:Max) %>% names()
 
-grp1 <- c('age','race', 'male')
-grp3 <- c('kneesymptoms','knee_patient','op_visits')
+grp1 <- c('age', 'male')
+grp3 <- c('koa','kneesymptoms','knee_patient','op_visits')
 grp4 <- c('obese','physjob','smoking')
 grp5 <- c('mcare','ortho','poor','zscore','rural')
-grp2 <- setdiff(out1$variable, c(grp1,grp3,grp4,grp5))
+grp2 <- setdiff(out1$variable, c(grp1,grp3,grp4,grp5,'race'))
 grps <- c(grp1, grp2, grp3, grp4, grp5)
 
-varlabs <- c('age'='Age', 'race' = 'Percent white', 'acutemi' = 'Acute MI', 
-             'afib' = 'Atrial fibrilation', 'breast' = 'Breast Cancer','chf' = 'Chronic heart failure',
-             'ckd' = 'Chronic kidney disease', 'colorectal' = 'Colorectal cancer', 
-             'copd' = 'COPD', 'dementia' = 'Dementia', 'depress' = 'Depression',
-             'diab' = 'Diabetes mellitus', 'endometrial_past' = 'Endometrial cancer', 
-             'hememalignancy'='Heme malignancy', 'hiv' = 'HIV', 'ihd' = 'Ischemic heart disease',
-             'koa' = 'Any knee OA visit', 
-             'liver' = 'Liver disease', 'lung' = 'Lung cancer', 'male' = 'Gender: Male', 
-             'prostate' = 'Prostate cancer', 'pvd' = 'Peripheral vasuclar disease',
-             'stroke' = 'Stroke', 'ulcers' = 'Leg ulcers', 
-             'kneesymptoms'= 'Knee symptoms','knee_patient' = 'Knee patient', 
-             'op_visits' = 'Outpatient visits', 'obese' = 'Percent Obese', 'physjob'='Percent with physical occupation',
-             'smoking' = 'Percent smokers', 'mcare' = 'Percent with Medicare Managed Care', 
-             'ortho' = 'Density of orthopedic surgeons','poor' = 'Poor', 'zscore' = 'SES score',
+varlabs <- c('age'='Mean age, years', 'acutemi' = 'Acute myocardial infarction', 
+             'afib' = 'Atrial fibrilation', 'breast' = 'Breast Cancer, ever','chf' = 'Congestive heart failure',
+             'ckd' = 'Chronic kidney disease', 'colorectal' = 'Colorectal cancer, ever', 
+             'copd' = 'Chronic obstructive pulmonary disease', 'dementia' = 'Dementia', 'depress' = 'Depression',
+             'diab' = 'Diabetes mellitus', 'endometrial_past' = 'Endometrial cancer, ever', 
+             'hememalignancy'='Hematological malignancy, ever', 'hiv' = 'HIV', 'ihd' = 'Ischemic heart disease',
+             'koa' = 'Any knee osteoarthritis visit', 
+             'liver' = 'Liver disease', 'lung' = 'Lung cancer, ever', 'male' = 'Men', 
+             'prostate' = 'Prostate cancer, ever', 'pvd' = 'Peripheral vasuclar disease',
+             'stroke' = 'Stroke', 'ulcers' = 'Skin ulcers', 
+             'kneesymptoms'= 'Knee symptoms','knee_patient' = 'Knee symptoms or knee osteoarthritis', 
+             'op_visits' = 'Outpatient visits', 'obese' = 'Percent obese', 'physjob'='Percent with physical occupation',
+             'smoking' = 'Percent smokers', 'mcare' = 'Percent with Medicare managed care', 
+             'ortho' = 'Density of orthopedic surgeons','poor' = 'Poor', 'zscore' = 'Mean area-based socioeconomic score',
              'rural' = 'Rural residence')
 
 out1 <- out1[match(grps, out1$variable ),]
@@ -225,11 +230,11 @@ ft1 <- flextable(out1) %>%
   #               i = match(varlabs[var_perc], out1$Variable),
   #               suffix = '%') %>% 
   bold(part = 'header') %>% 
-  footnote(i = match(varlabs[var_num],out1$Variable),
-           j = 1, 
-           value = as_paragraph('These rows give HRR-level means, the other rows give percentages'),
-           ref_symbols = c('1'), 
-           part='body') %>% 
+  # footnote(i = match(varlabs[var_num],out1$Variable),
+  #          j = 1, 
+  #          value = as_paragraph('These rows give HRR-level means, the other rows give percentages'),
+  #          ref_symbols = c('1'), 
+  #          part='body') %>% 
   autofit()
 ft1
 ```
@@ -238,7 +243,7 @@ ft1
 
 ```{r Suppl-Figure-3}
 source(here::here('lib','R','split_violin.R'))
-smrs <- import('../data/raw/PROJ4_SMR_WHITE.csv') %>% 
+smrs <- import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv')) %>% 
   select(smr1, smr3) %>% gather()
 ggplot(smrs, 
        aes(x = 1, y = value, fill = key)) + 
@@ -271,38 +276,38 @@ out$Effect[out$Effect=='male*agecat' & out$male==0] = paste('Female &', age_cate
 out$Estimate[out$knee_patient==0] = -out$Estimate[out$knee_patient==0]
 out <- out %>% filter(Parameter != 'knee_patient 1')
 
-varlabs <- c('acutemi' = 'Acute MI', 
+varlabs <- c('acutemi' = 'Acute myocardiar infarction', 
              'afib' = 'Atrial fibrilation', 
-             'breast_past' = 'Breast Cancer',
-             'chf' = 'Chronic heart failure',
+             'breast_past' = 'Breast cancer, ever',
+             'chf' = 'Congestive heart failure',
              'ckd' = 'Chronic kidney disease', 
-             'colorectal_past' = 'Colorectal cancer', 
-             'copd' = 'COPD', 
+             'colorectal_past' = 'Colorectal cancer, ever', 
+             'copd' = 'Chronic obstructive pulmonary disease', 
              'dementia' = 'Dementia', 
              'depress' = 'Depression',
              'diab' = 'Diabetes mellitus', 
-             'endometrial_past' = 'Endometrial cancer', 
-             'hememalignancy'='Heme malignancy', 
+             'endometrial_past' = 'Endometrial cancer, ever', 
+             'hememalignancy'='Hematological malignancy, ever', 
              'hiv' = 'HIV', 
              'ihd' = 'Ischemic heart disease',
              'koa' = 'Any knee OA visit', 
              'liver' = 'Liver disease', 
-             'lung_past' = 'Lung cancer', 
-             'prostate_past' = 'Prostate cancer',
+             'lung_past' = 'Lung cancer, ever', 
+             'prostate_past' = 'Prostate cancer, ever',
              'pvd' = 'Peripheral vasuclar disease',
              'stroke' = 'Stroke', 
-             'ulcers' = 'Leg ulcers', 
+             'ulcers' = 'Skin ulcers', 
              'kneesymptoms'= 'Knee symptoms',
-             'knee_patient' = 'Knee patient', 
+             'knee_patient' = 'Knee symptoms or osteoarthritis', 
              'op_visits' = 'Outpatient visits', 
-             'obese_wtperc' = 'Percent Obese', 
+             'obese_wtperc' = 'Percent obese', 
              'physjob_t_wtperc'='Percent with physical occupation',
              'smoking_wtperc' = 'Percent smokers', 
-             'mcare' = 'Percent with Medicare Managed Care', 
+             'mcare' = 'Percent with Medicare managed care', 
              'ortho' = 'Density of orthopedic surgeons',
-             'poor' = 'Poor', 'zscore' = 'SES score',
+             'poor' = 'Poor', 
              'rural' = 'Rural residence',
-             'zscore' = 'SES')
+             'zscore' = 'Area-based socioeconomic score')
 
 out <- out %>% 
   mutate(Effect = ifelse(Effect %in% names(varlabs), varlabs[Effect], Effect)) %>% 
@@ -310,12 +315,12 @@ out <- out %>%
   filter(Effect != 'male*agecat (ref)') %>% 
   select(Effect, Estimate, StdErr, ProbChiSq) %>% 
   mutate(Estimate = ifelse(Estimate==0, NA, Estimate)) %>% 
-  rename('Std. Err.' = 'StdErr', 'P-value' = 'ProbChiSq')
+  rename('Std. Err.' = 'StdErr', 'P-value' = 'ProbChiSq', 'Variable'='Effect')
 
-ft <- flextable(out) %>% 
+ft <- flextable(out[,1:3]) %>% 
   colformat_num(c('Estimate','Std. Err.'), digits = 2) %>% 
   bold(part='header') %>% 
-  border(i = str_detect(out$Effect, 'ref'), border.bottom = officer::fp_border(color = 'grey', style='dashed')) %>% 
+  border(i = str_detect(out$Variable, 'ref'), border.bottom = officer::fp_border(color = 'grey', style='dashed')) %>% 
   autofit()
 ft
 
@@ -346,18 +351,143 @@ smr_white <- smr_white %>% left_join(smr_black) %>%
 library(flextable)
 ft <- flextable(smr_white %>% select(-hrr), cwidth=1.5) %>% 
   colformat_num(col_keys = c('smr_white','smr_black'), digits=2) %>% 
-  set_header_labels(smr_white='White', smr_black="Black")
+  set_header_labels(Location='Health Referral Region', smr_white='White', smr_black="Black")
 ft
 ```
 
+<!-- #### Supplemental Figure 4.  Excess annual number of total knee arthroplasties among white beneficiaries age 65 to 69 without comorbidities (blue) and white beneficiaries with either dementia, peripheral vascular disease, or leg ulcers (pink) in the 63 Health Referral Regions with an observed/expected ratio of 1.2 or higher.  The length of each bar represents the relative proportion of each group.  The numbers at the ends of each bar indicate the raw number of arthroplasties over that expected based on rates among similar beneficiaries in regions with an observed/expected ratio of 0.90 to 1.01 (as the reference group).  To derive these, we first computed the risk difference between the incidence of TKA in each Health Referral Region and the pooled incidence in the reference group of Health Referral Regions for beneficiaries age 65 to 69 without comorbidities.  We then multiplied the risk difference of each region by its population of beneficiaries age 65 to 69 without comorbidities to give the excess number of total knee arthroplasties in this group.  We then repeated this process for beneficiaries with either dementia, peripheral vascular disease, or leg ulcers.  Health Referral Regions with no data had lower incidences of total knee arthroplasty among these two groups of beneficiaries than the reference group, despite having high overall observed/expected ratios. -->
 
-#### Figure 4. Mean annual number of primary total knee arthroplasties performed per surgeon among white Medicare beneficiaries, by Health Referral Region. Regions are ordered from low to high based on their observed/expected ratio.
+```{r Suppl-Figure-4-del, fig.height=9.5, fig.width=7.5, eval = F, echo = F}
 
-```{r Suppl-Figure-4, cache = TRUE}
+smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
+mid_hrr <- smr_white %>% filter(smr3 > 0.99, smr3 < 1.01) %>% pull(hrr)
+
+excess_tka <- function(hrr1, condition_name) {
+  dat <- conditions_white %>%
+    filter(condition==condition_name) %>%
+    filter(hrr %in% c(hrr1, mid_hrr)) %>%
+    mutate(Group = ifelse(hrr %in% mid_hrr, 'mid', 'high'))
+
+  base_rate <- dat %>% filter(Group=='mid') %>%
+    dplyr::summarize(rate = sum(num)/sum(denom)*1000) %>% pull(rate)
+
+  dat %>% group_by(Group) %>%
+    dplyr::summarize(py = sum(denom), rate = sum(num)/sum(denom)*1000) %>%
+    mutate(rate_diff = -diff(rate)) %>%
+    filter(Group=='high') %>%
+    mutate(excess_tka = py * rate_diff/1000,
+           excess_tka_per_yr = excess_tka / 5,
+           hrr = hrr1,
+           base_rate = base_rate,
+           condition = condition_name) %>%
+    select(hrr, condition, rate, base_rate, rate_diff, excess_tka_per_yr)
+}
+smr_white <- import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
+conditions_white <- import(path(drop_dir,'raw/PROJ4_TKA_CONDITIONS_june.csv')) %>%
+  bind_rows(import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>%
+              mutate(condition='depression')) %>%
+  filter(condition != 'poorrisk')
+hrr_info <- sf::st_read(file.path(drop_dir, 'HRR_Bdry.SHP'), quiet = T) %>%
+  separate(HRRCITY, c("state",'city'), sep = '-', extra = 'merge') %>%
+  mutate(city = str_trim(city)) %>%
+  mutate(city = str_to_title(city)) %>%
+  unite('Location',c('city','state'), sep = ', ')
+
+high_hrr_12 <- smr_white %>% filter(smr3 > 1.2) %>% pull(hrr)
+high_hrr_12 <- as_tibble(hrr_info) %>% filter(HRRNUM %in% high_hrr_12) %>%
+  select(Location, HRRNUM, -geometry)
+high_hrr_12 <- setNames(as.list(high_hrr_12$HRRNUM), high_hrr_12$Location)
+
+results_healthy <- map_dfr(high_hrr_12, excess_tka, 'healthy',.id='Location')
+results_contra <- map_dfr(high_hrr_12, excess_tka, 'contra', .id = 'Location')
+results <- bind_rows(results_healthy, results_contra) %>%
+  left_join(smr_white %>% select(hrr, smr3)) %>%
+  arrange(desc(smr3)) %>%
+  mutate(Location = as.factor(Location)) %>%
+  mutate(Location = fct_reorder(Location, smr3))
+
+results2 <- results %>% mutate(excess_tka_per_yr = ifelse(excess_tka_per_yr < 0, NA, excess_tka_per_yr)) %>%
+  mutate(condition = ifelse(condition=='healthy','No comorbidities','Contraindications'))
+ggplot(results2, aes(x = Location, y = excess_tka_per_yr, fill = condition))+
+  geom_bar(stat='identity', position='fill') +
+  labs(x = '', y = 'Excess TKA, relative proportion') +
+  geom_text(data = filter(results2, condition == 'No comorbidities'),
+            aes(x = Location, y = 0.03, label = round(excess_tka_per_yr,0)),
+            size = 2, hjust = 0, vjust=0.3, color='white', show.legend = F) +
+  geom_text(data = filter(results2, condition == 'Contraindications'),
+            aes(x = Location, y = .97, label = round(excess_tka_per_yr,0)),
+            size = 2, hjust = 1, vjust = 0.3, color='black', show.legend = F)+
+  geom_hline(yintercept = 0.5, linetype = 2) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_fill_manual(values = c('No comorbidities' = '#0033cc',
+                                'Contraindications' = '#ff5050')) +
+  theme_bw() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.y  = element_blank(),
+        axis.text.y = element_text(size = 8, color='black'),
+        axis.title = element_text(color='black'),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank()) +
+  coord_flip()
+
+```
+
+<!-- #### Associations between rates of total knee arthroplasty among beneficiaries with depression, congestive heart failure, or diabetes mellitus and the observed/expected ratio for rates of primary total knee arthroplasty among white Medicare beneficiaries in each Health Referral Region. -->
+
+```{r Suppl-Figure-5-del, echo = F, eval = F}
+comorb_tka <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
+depression <-  import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
+  mutate(condition='depression') %>% mutate(prop = prop*1000)
+comorb_tka <- bind_rows(comorb_tka, depression)
+  
+comorb_tka %>% filter(condition %in% c('depression','chf','diabetes')) %>% 
+  mutate(condition = fct_recode(condition, 
+                                'Depression' = 'depression',
+                                'Congestive\nHeart Failure' = 'chf',
+                                'Diabetes Mellitus' = 'diabetes')) %>% 
+  ggplot(aes(y = smr3, x = prop)) + 
+  geom_point() + 
+  geom_smooth(color='red', se = F) + 
+  # scale_y_(breaks = c(0.7, 1, 1/0.7),
+  #               labels = scales::number_format(accuracy=0.01)) + 
+  scale_x_continuous( breaks = seq(10,60, by=10)) + 
+  facet_wrap(~condition, nrow=1, scales='free_x') +
+ labs( x = 'Incidence of TKA per 1000 among those with condition', 
+        y = 'Observed/Expected Ratio (OER)') + 
+  theme(text = element_text(size = 14))
+
+
+# comorb_tka1 <- comorb_tka %>% gather(variable, value, dementia:healthy) %>% 
+#   mutate(variable = as.factor(variable)) %>% 
+#   mutate(variable = fct_relevel(variable, 'dementia','pvd','ulcers','depress','chf','healthy')) %>% 
+#   mutate(variable = fct_recode(variable,
+#                                'Dementia' = 'dementia',
+#                                 'Peripheral\n vascular disease' = 'pvd',
+#                                 'Skin ulcers' = 'ulcers',
+#                                 'No comorbidity' = 'healthy',
+#                                 'Depression' = 'depress',
+#                                 'Congestive\nHeart Failure' = 'chf')) 
+# ggplot(comorb_tka1, 
+#        aes(x = smr3, y = value))+
+#   geom_point() + 
+#   geom_smooth(se = F, color = 'red') + 
+#   scale_x_log10(breaks = c(0.7, 1, 1/0.7),
+#                 labels = scales::number_format(accuracy=0.01)) + 
+#   scale_y_continuous(labels = scales::percent_format(accuracy=1)) +
+#   facet_wrap(~variable, nrow = 2) +
+#   labs(x = 'Observed/Expected Ratio (full model, whites)',
+#        y = 'Proportion of TKA patients with condition')
+```
+
+
+#### Supplemental Figure 4. Mean annual number of primary total knee arthroplasties performed per surgeon among white Medicare beneficiaries, by Health Referral Region. Regions are ordered from low to high based on their observed/expected ratio.
+
+```{r Suppl-Figure-4, cache = FALSE}
 library(ggridges)
-phys <- read_csv('../data/raw/phys_volume2.csv')
-smr_white <- read_csv('../data/raw/PROJ4_SMR_WHITE.csv')
-phys <- phys %>% left_join(smr_white %>% select(hrr, smr3), by = c('hrrnum' = 'hrr'))
+phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
+smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
+phys <- phys %>% left_join(smr_white %>% select(hrr, smr3, py), by = c('hrrnum' = 'hrr')) %>% 
+  rename('pyears' = 'py.y', 'py'='py.x')
 phys <- phys %>% mutate(hrrnum = factor(hrrnum)) %>% 
   mutate(hrrnum  = fct_reorder(hrrnum, smr3),
          tka = tka/5)
@@ -369,50 +499,69 @@ ggplot(phys, aes(x = tka, y = hrrnum,  fill = smr3)) +
   map_scale_fill(breaks = c(min(phys$smr3), 1, max(phys$smr3)))+
   # scale_fill_gradient2(name = 'OER', trans = 'log', breaks = c(0.7, 1, 1.4),
                        # low = 'blue', high = 'red', mid = 'white') +
-  labs(x = 'Annual TKA volume per surgeon', y = 'HRR') + 
+  labs(x = 'Annual TKA volume per surgeon', y = '') + 
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         panel.grid.major.y = element_blank())
 ```
 
 
+```{r, Suppl-Figure-4a, eval = F}
+phys <- read_csv(path(drop_dir,'raw/phys_volume2.csv'))
+smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
+phys <- phys %>% left_join(smr_white %>% select(hrr, smr3, py), by = c('hrrnum' = 'hrr')) %>% 
+  rename('pyears' = 'py.y', 'py'='py.x')
+phys <- phys %>% mutate(hrrnum = factor(hrrnum)) %>% 
+  mutate(hrrnum  = fct_reorder(hrrnum, smr3),
+         tka = tka/5)
+bl <- phys %>% count(hrrnum, smr3, tka) %>% 
+  mutate(tka_cat = cut(tka, c(0,10,20, 30, 40, 50, 500), include.lowest = T, right=F)) %>% 
+  mutate(tka_cat = fct_recode(tka_cat, '0-9.9' = '[0,10)', '10-19.9'='[10,20)',
+                              '20-29.9' = '[20,30)', '30-39.9' = '[30,40)', 
+                              '40-49.9' = '[40,50)', '50+' = '[50,500]'))
+bl2 <- bl %>% count(hrrnum,tka_cat) %>% group_by(hrrnum) %>% mutate(pct = 100*n/sum(n)) %>% ungroup()
+ggplot(bl2, aes(x = hrrnum, y = n, fill = tka_cat)) + 
+  geom_bar(stat='identity', position = 'fill',width=1) + 
+  # scale_x_continuous(expand = c(0,0)) +
+  scale_fill_brewer(type = 'seq', palette=7) + 
+  theme_classic() + 
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = c(0,0))+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid = element_blank()) + 
+  labs(x= 'Low  <<<<   Observed/Expected Ratio >>>> High', 
+       y = 'Percentage within HRR',
+       fill = 'Annual TKA volume') 
+## Need better color scales
 
+bl3 <- bl2 %>% left_join(smr_white %>% mutate(hrr = fct_reorder(factor(hrr),smr3)) %>% select(hrr, smr3), by= c('hrrnum' = 'hrr'))
+ggplot(bl3, aes(x = smr3, y = pct, color = tka_cat))+geom_point() + geom_smooth(se=F) + labs(x = 'Observed/Expected Ratio', y = 'Percentage of orthopedic surgeons within HRR', color = 'TKA volume per year')
 
-#### Table 5. Observed/expected ratios for rates of primary total knee arthroplasty among black Medicare beneficiaries by Health Referral Region. Expected rates were based on the full model. 
+bl4 <- phys %>% group_by(OP_PHYSN_NPI) %>% summarize(tka_vol = sum(tka)) %>% ungroup() %>% 
+  mutate(tka_mod = ifelse(tka_vol >= 10, 1, 0),
+         tka_high = ifelse(tka_vol >= 60, 1, 0),
+         tka_low = ifelse(tka_vol < 1, 1, 0))
 
-_This was included in Supplemental Table 4_
+phys2 <- left_join(phys, select(bl4, -tka_vol))
 
-#### Figure 5. Association of the proportion of white TKA recepients with dementia, depression, CHF, PVD, leg ulcers or no comorbidities with the observed-to-expected ratio for rates of TKA, by Health Referral Region. 
+blah <- phys2 %>% group_by(hrrnum, smr3) %>% 
+  summarize(done_by_low = sum(tka * tka_low)/sum(tka) * 100,
+            done_by_mod = sum(tka * tka_mod)/sum(tka) * 100,
+            done_by_high = sum(tka * tka_high)/sum(tka) *100) %>% 
+  ungroup()
 
-```{r Suppl-Figure-5}
-comorb_tka <- import('../data/raw/PROJ4_COMORB_TKA_WHITE.csv')
-smr_white <- import('../data/raw/PROJ4_SMR_WHITE.csv') %>% 
-  select(hrr, smr3)
-comorb_tka <- comorb_tka %>% left_join(smr_white)
-comorb_tka1 <- comorb_tka %>% gather(variable, value, dementia:healthy) %>% 
-  mutate(variable = as.factor(variable)) %>% 
-  mutate(variable = fct_relevel(variable, 'dementia','pvd','ulcers','depress','chf','healthy')) %>% 
-  mutate(variable = fct_recode(variable,
-                               'Dementia' = 'dementia',
-                                'Peripheral\n vascular disease' = 'pvd',
-                                'Leg ulcers' = 'ulcers',
-                                'No comorbidity' = 'healthy',
-                                'Depression' = 'depress',
-                                'Congestive\nHeart Failure' = 'chf')) 
-ggplot(comorb_tka1, 
-       aes(x = smr3, y = value))+
-  geom_point() + 
-  geom_smooth(se = F, color = 'red') + 
-  scale_x_log10(breaks = c(0.7, 1, 1/0.7),
-                labels = scales::number_format(accuracy=0.01)) + 
-  scale_y_continuous(labels = scales::percent_format(accuracy=1)) +
-  facet_wrap(~variable, nrow = 2) +
-  labs(x = 'Observed/Expected Ratio (full model, whites)',
-       y = 'Proportion of TKA patients with condition')
+blah2 <- blah %>% select(smr3, done_by_low, done_by_high) %>% gather(group, perc, -smr3) %>% 
+  mutate(group = ifelse(group =='done_by_low', '< 1', '> 60'))
+ggplot(blah2, aes(smr3, perc, color = group)) + geom_point() + geom_smooth(se = F) + 
+  labs (x = 'Observed/Expected Ratio', y = 'Percentage of TKA within HRR', color = 'Surgeon TKA annual volume')
 ```
+
+
 
 
 ```{r post, inlcude=F, message=F, results = 'hide'}
 ProjTemplate::pdf2tiff(here::here('docs','Result_Graphs'))
 ```
+
 

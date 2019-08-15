@@ -5,16 +5,18 @@
 
 library(tidyverse)
 library(rio)
+library(ProjTemplate)
+library(fs)
 
+drop_dir <- path(find_dropbox(),'NIAMS','Ward','Medicare2015')
 
 # Data ingestion ----------------------------------------------------------
 
-smr_white <- import('data/raw/PROJ4_SMR_WHITE.csv')
-conditions_white <- import('data/raw/PROJ4_TKA_CONDITIONS_june.csv') %>%
-  bind_rows(import('data/raw/PROJ4_TKA_DEPRESSION.csv') %>%
+smr_white <- import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
+conditions_white <- import(path(drop_dir,'raw/PROJ4_TKA_CONDITIONS_june.csv')) %>%
+  bind_rows(import(path(drop_dir,'raw/PROJ4_TKA_DEPRESSION.csv')) %>%
               mutate(condition='depression')) %>%
   filter(condition != 'poorrisk')
-drop_dir <- file.path(ProjTemplate::find_dropbox(),'NIAMS','Ward','Medicare2015')
 hrr_info <- sf::st_read(file.path(drop_dir, 'HRR_Bdry.SHP'), quiet = T) %>%
   separate(HRRCITY, c("state",'city'), sep = '-', extra = 'merge') %>%
   mutate(city = str_trim(city)) %>%
@@ -99,12 +101,11 @@ ggplot(results, aes(x = Location, y = rate_diff)) +
 # Final barplot -----------------------------------------------------------
 
 
-smr_white <- import('data/raw/PROJ4_SMR_WHITE.csv')
-conditions_white <- import('data/raw/PROJ4_TKA_CONDITIONS_june.csv') %>%
-  bind_rows(import('data/raw/PROJ4_TKA_DEPRESSION.csv') %>%
+smr_white <- import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
+conditions_white <- import(path(drop_dir,'raw/PROJ4_TKA_CONDITIONS_june.csv')) %>%
+  bind_rows(import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>%
               mutate(condition='depression')) %>%
   filter(condition != 'poorrisk')
-drop_dir <- file.path(ProjTemplate::find_dropbox(),'NIAMS','Ward','Medicare2015')
 hrr_info <- sf::st_read(file.path(drop_dir, 'HRR_Bdry.SHP'), quiet = T) %>%
   separate(HRRCITY, c("state",'city'), sep = '-', extra = 'merge') %>%
   mutate(city = str_trim(city)) %>%
@@ -128,4 +129,28 @@ ggplot(results, aes(x = Location, y = excess_tka_per_yr, fill = condition))+
   geom_bar(stat='identity') + labs(y = 'Excess TKA') + theme_bw() +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.minor.y  = element_blank())+
+  coord_flip()
+
+
+results2 <- results %>% mutate(excess_tka_per_yr = ifelse(excess_tka_per_yr < 0, NA, excess_tka_per_yr)) %>%
+  mutate(condition = ifelse(condition=='healthy','No comorbidities','Contraindications'))
+ggplot(results2, aes(x = Location, y = excess_tka_per_yr, fill = condition))+
+  geom_bar(stat='identity', position='fill') +
+  labs(x = '', y = 'Excess TKA, relative proportion') +
+  geom_text(data = filter(results2, condition == 'No comorbidities'),
+            aes(x = Location, y = 0.03, label = round(excess_tka_per_yr,0)),
+            size = 2, hjust = 0, vjust=0.3, color='white', show.legend = F) +
+  geom_text(data = filter(results2, condition == 'Contraindications'),
+            aes(x = Location, y = .97, label = round(excess_tka_per_yr,0)),
+            size = 2, hjust = 1, vjust = 0.3, color='black', show.legend = F)+
+  geom_hline(yintercept = 0.5, linetype = 2) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_fill_manual(values = c('No comorbidities' = '#0033cc',
+                                'Contraindications' = '#ff5050')) +
+  theme_bw() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor.y  = element_blank(),
+        axis.text.y = element_text(size = 8),
+        axis.ticks.y = element_blank(),
+        legend.title = element_blank()) +
   coord_flip()
