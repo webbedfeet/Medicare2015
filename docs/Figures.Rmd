@@ -302,7 +302,45 @@ ggplot(smr_black, aes(x = ortho_per_100000, y = smr3)) +
        y = 'Observed/Expected ratio (OER)')
 ```
 
-```{r post, inlcude=F, message=F, results = 'hide'}
-ProjTemplate::pdf2tiff(here::here('docs','Result_Graphs'))
+
+
+#### _Figure 7.__ Association of observed-expected ratio OER) with knee arthroplasty volume by HRR. The lines represent the range of OER values over the 5 years of the study. 
+
+```{r Figure-7}
+overall_smr <- 
+  rio::import(path(drop_dir,'raw','PROJ4_OVERALL_SMR.csv')) %>% 
+  select(hrr, SMR3)
+dat_n <- rio::import(path(drop_dir, 'N_2013.csv'))
+yrs <- 2011:2015
+dat <- list()
+for(yr in yrs){
+  dat[[as.character(yr)]] <- 
+    rio::import(path(drop_dir,                                               paste0('PROJ4_HRR_MODSUMMARY_',yr,'.csv'))) %>% 
+    group_by(hrr) %>% 
+    dplyr::summarize(obs= sum(total_knee), 
+              expect = sum(expected_knee3)) %>% 
+    mutate(oer = obs/expect) %>% 
+    ungroup() %>% 
+    select(hrr, oer) %>% 
+    left_join(dat_n)
+}
+Dat <- bind_rows(dat, .id = 'year') %>% 
+  group_by(hrr) %>% 
+  dplyr::summarize(N = unique(N), 
+            maxoer = max(oer),
+            minoer = min(oer),
+            rangeoer = maxoer - minoer) %>% 
+  ungroup() %>% 
+  left_join(overall_smr)
+
+library(scales)
+ggplot(Dat, aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) + 
+  geom_pointrange(size = 0.5) + 
+  scale_y_log10() + scale_x_continuous(labels = comma) +
+  labs(x = 'Number of total knee arthroplasties', 
+       y = 'Observed/Expected Ratio')
 ```
 
+```{r post, include=F, message=F, results = 'hide'}
+ProjTemplate::pdf2tiff(here::here('docs','Result_Graphs'))
+```
