@@ -27,17 +27,130 @@ if(Sys.info()['sysname']=='Windows'){
 
 > For whites only, need number of beneficiaries and number of TKA, by year and overall.  Among these, need descriptives for age and sex by year and overall, and percent with knee osteoarthritis or knee symptoms. Also crude rate of TKA overall among whites. (E-mail, 2/4/2020 1:43 PM)
 
-```{r}
+```{r, eval=F}
 whites_tka <- import(path(data_dir,'raw','TKAS_WHITE2.csv')) %>% 
   select(BENE_ENROLLMT_REF_YR, tka, n) %>%
-  janitor::adorn_totals('row') %>% 
+  # janitor::adorn_totals('row') %>% 
   mutate(tka = format(tka, big.mark=','), n = format(n, big.mark=',')) %>%
   rename('Year'='BENE_ENROLLMT_REF_YR','TKA'='tka', 'Number of beneficiaries' = 'n')
 # kable(whites_tka) %>% 
 #   kable_styling(full_width=F)
 kable(whites_tka, align='lcc',
-      caption = "")
-pander::pander(whites_tka,
-               caption = "Table 1: Number of TKA and number of beneficiaries among whites by year")
+      caption = "Table 1: Number of TKA and number of beneficiaries among whites by year")
+# pander::pander(whites_tka,
+#                caption = "Table 1: Number of TKA and number of beneficiaries among whites by year")
+```
+
+```{r}
+whites <- import(path('P:/', 'Work','Ward','Studies','Medicare2015','docs','revision_updates.xlsx'), 
+                 n_max = 6) %>% 
+  mutate(fraction_male = 100*(1-fraction_male)) %>% 
+  # select(Year, MeanAge:perc_knee) %>% 
+  mutate_at(vars(TKA:`Number Beneficiaries`), format, big.mark=',') %>% 
+  mutate_at(vars(MeanAge:perc_knee), round, 2) %>% 
+  rename('Age (mean)' = 'MeanAge', 'Age (SD)' = 'SDAge', 'Percent female' = 'fraction_male', 'Percent with knee issues' = 'perc_knee')
+kable(whites, align = 'lcccccc',caption = "Table 1: TKA, benficiaries, age, sex and knee issues by year") %>% 
+  kable_styling(full_width=T)
+```
+
+```{r}
+smr_white <- import(path(data_dir, 'raw', 'PROJ4_SMR_WHITE.csv'))
+```
+
+The crude rate for TKA is `r round(1000*sum(smr_white$total_knee)/sum(smr_white$py),2)` per 1000 person-years. 
+
+
+## Correlation analysis
+
+> They also are asking for measures of effect size and variation.  I am thinking we should add correlations between OER and the predictors in the figures.  What do you think? (E-mail, 2/4/2020 2:03 PM)
+
+### Figure 2
+
+```{r}
+library(Hmisc)
+library(patchwork)
+
+smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
+
+dat <- smr_white %>% select(hrr, smr3, mean_op, rural_perc:mean_koa_visits, frac_koa) %>% 
+  gather(metric, frac, -smr3, -hrr) %>% as_tibble()
+
+dat %>% group_by(metric) %>% summarize(corr_coef = cor(smr3, frac, method='spearman'))
+label(smr_white$rural_perc) <- 'Percent rural\n'
+label(smr_white$mean_op) <- 'Average number of \noutpatient visits per year'
+label(smr_white$mcare_adv_wtperc) <- 'Percentage with \nMedicare Managed Care'
+label(smr_white$ortho_per_100000) <- 'Number of TKA surgeons\nper 100,000 beneficiaries'
+label(smr_white$mean_koa_visits) <- 'Mean annual knee visits\n per person'
+label(smr_white$frac_koa) <- 'Fraction of people with \nat least one knee visit a year'
+plot_fn <- function(variable){
+  vrbl <- enquo(variable)
+  ggplot(smr_white, aes(x = !!vrbl, y = smr3))+
+    geom_point()+
+    geom_smooth(se = F, color = 'red') +
+    geom_hline(yintercept = 1, linetype = 2) +
+    labs(x = label(smr_white[[ensym(vrbl)]]),
+         y = 'Observed/Expected ratio (OER)') +
+    theme_bw() +
+    theme(axis.text = element_text(size = 12),
+          axis.title = element_text(size = 12, face = 'bold'),
+          axis.title.y = element_blank())
+}
+
+
+```
+
+### Figure 4
+
+We computed the Spearman correlation coefficient between the prevalences and the corresponding SMRs and computed a 95% confidence interval using 5000 bootstrap samples. The results are below.
+
+```{r}
+drop_dir <- data_dir
+conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
+depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
+  mutate(condition='depression') %>% mutate(prop = prop*1000)
+conditions <- bind_rows(conditions,depr)
+conditions <- conditions %>% 
+  filter(condition %in% c('dementia','ulcers','pvd','chf','depression','diabetes','healthy')) %>% 
+  mutate(condition = as.factor(condition)) %>% 
+  mutate(condition = fct_relevel(condition, 'dementia','ulcers','pvd','chf','depression','diabetes','healthy')) %>% 
+  mutate(condition = fct_recode(condition, 
+                                'Dementia' = 'dementia',
+                                'Peripheral vascular disease' = 'pvd',
+                                'Skin ulcers' = 'ulcers',
+                                'Congestive heart failure' = 'chf',
+                                'Depression' = 'depression',
+                                'Diabetes Mellitus' = 'diabetes',
+                                'No comorbidity' = 'healthy',
+                                # 'Depression' = 'depression',
+                                # 'Congestive\nHeart Failure' = 'chf'
+                                )) 
+
+corr_obs <- conditions %>% group_by(condition) %>% 
+  summarize(corr_coef = cor(prop, smr3, method='spearman')) %>% ungroup()
+set.seed(295789)
+indx <- (do(5000)*resample(conditions %>% select(hrr) %>% distinct())) %>% 
+  group_split(.index)
+corr_boot = map_dfr(indx, ~conditions %>% filter(hrr %in% .$hrr) %>% group_by(condition) %>% summarize(corr_coef = cor(smr3, prop, method='spearman')))
+corr_boot <- do(5000) * (resample(conditions) %>% group_by(condition) %>% 
+                           summarize(corr_coef=cor(prop, smr3, method='spearman')))
+boot_ci <- corr_boot %>% group_by(condition) %>% summarize(lcb = quantile(corr_coef, 0.025),
+                                                           ucb = quantile(corr_coef, 0.975)) %>% 
+  ungroup()
+out = left_join(corr_obs, boot_ci) %>% 
+  mutate_at(vars(-condition), round, 3) %>% 
+  rename("Condition" = 'condition', "Spearman correlation" = 'corr_coef', 'LCB'='lcb','UCB'='ucb')
+kable(out, align='lccc')
+
+# ggplot(conditions, aes(x = prop, y = smr3)) + 
+#   geom_point() + 
+#   geom_smooth(se = F, color = 'red') + 
+#   geom_hline(yintercept = 1, linetype = 2) +
+#   facet_wrap(~ condition, nrow=3, ncol = 3, scales = 'free_x') +
+#   scale_x_continuous(breaks = seq(10, 60, by = 10))+
+#   labs( x = 'Incidence of TKA per 1000 among those with condition', 
+#         y = 'Observed/Expected Ratio (OER)') + 
+#   theme(text = element_text(size = 14),
+#         strip.text = element_text(size = 10))
+
 ```
 
