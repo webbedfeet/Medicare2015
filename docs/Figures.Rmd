@@ -306,7 +306,7 @@ ggplot(smr_black, aes(x = ortho_per_100000, y = smr3)) +
 
 #### _Figure 7.__ Association of observed-expected ratio OER) with knee arthroplasty volume by HRR. The lines represent the range of OER values over the 5 years of the study. 
 
-```{r Figure-7}
+```{r Figure-7, echo = TRUE}
 overall_smr <- 
   rio::import(path(drop_dir,'raw','PROJ4_OVERALL_SMR.csv')) %>% 
   select(hrr, SMR3)
@@ -334,11 +334,18 @@ Dat <- bind_rows(dat, .id = 'year') %>%
   left_join(overall_smr)
 
 library(scales)
-ggplot(Dat, aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) + 
-  geom_pointrange(size = 0.5) + 
-  scale_y_log10() + scale_x_continuous(labels = comma) +
-  labs(x = 'Number of total knee arthroplasties', 
+p1 <- ggplot(Dat %>% filter(N <= 100000), aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) + 
+  geom_pointrange(size = 0.5) +
+  scale_y_log10(breaks = c(0.7, 1, 2), limits = c(0.5, 2.05)) + scale_x_continuous(labels = comma) +
+  labs(x = 'Population in Medicare', 
        y = 'Observed/Expected Ratio')
+p2 <- ggplot(Dat %>% filter(N > 100000), aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) + 
+  geom_pointrange(size = 0.5) + 
+  scale_y_log10(breaks = c(0.7, 1, 2), limits = c(0.5, 2.05)) + scale_x_continuous(labels = comma) +
+  labs(x = 'Population in Medicare', 
+       y = 'Observed/Expected Ratio')
+cowplot::plot_grid(p1, p2, nrow = 2, ncol = 1)
+
 ```
 
 ```{r post, include=F, message=F, results = 'hide'}
