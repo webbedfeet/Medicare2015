@@ -1,0 +1,29 @@
+---
+title: Updated analyses for journal response
+author: Abhijit Dasgupta
+date: "`r format(Sys.time(), '%d %b, %Y %I:%M %p')`"
+output_format: html_document
+---
+
+```{r preamble, include = F}
+knitr::opts_chunk$set(warning = F, message = F, echo = F)
+library(tidyverse)
+library(fs)
+library(kableExtra)
+library(rio)
+library(here)
+library(sf)
+library(infer)
+library(sjlabelled)
+
+if(Sys.info()['sysname']=='Windows'){
+  data_dir <- path('P:/','Work','Ward','Studies','Medicare2015','data')
+  dir_exists(data_dir)
+}
+```
+
+
+## White demographics
+
+> For whites only, need number of beneficiaries and number of TKA, by year and overall.  Among these, need descriptives for age and sex by year and overall, and percent with knee osteoarthritis or knee symptoms. Also crude rate of TKA overall among whites. (E-mail, 2/4/2020 1:43 PM)
+
