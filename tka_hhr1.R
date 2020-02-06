@@ -11,8 +11,14 @@
 #+ include = FALSE
 library(tidyverse)
 library(sf)
+library(fs) # For paths
 library(kableExtra)
-overall_smr <- read_csv('data/raw/PROJ4_OVERALL_SMR.csv')
+
+if(Sys.info()['sysname']=='Windows') {
+  data_dir <- path('P:/','Work','Ward','Studies','Medicare2015', 'data')
+  dir_exists(data_dir)
+}
+overall_smr <- read_csv(path(data_dir, 'raw/PROJ4_OVERALL_SMR.csv'))
 knitr::opts_chunk$set(echo = F, warning = F, message = F)
 
 #' ### Range of SMRs
