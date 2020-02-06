@@ -27,3 +27,17 @@ if(Sys.info()['sysname']=='Windows'){
 
 > For whites only, need number of beneficiaries and number of TKA, by year and overall.  Among these, need descriptives for age and sex by year and overall, and percent with knee osteoarthritis or knee symptoms. Also crude rate of TKA overall among whites. (E-mail, 2/4/2020 1:43 PM)
 
+```{r}
+whites_tka <- import(path(data_dir,'raw','TKAS_WHITE2.csv')) %>% 
+  select(BENE_ENROLLMT_REF_YR, tka, n) %>%
+  janitor::adorn_totals('row') %>% 
+  mutate(tka = format(tka, big.mark=','), n = format(n, big.mark=',')) %>%
+  rename('Year'='BENE_ENROLLMT_REF_YR','TKA'='tka', 'Number of beneficiaries' = 'n')
+# kable(whites_tka) %>% 
+#   kable_styling(full_width=F)
+kable(whites_tka, align='lcc',
+      caption = "")
+pander::pander(whites_tka,
+               caption = "Table 1: Number of TKA and number of beneficiaries among whites by year")
+```
+
