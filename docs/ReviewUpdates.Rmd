@@ -3,10 +3,12 @@ title: Updated analyses for journal response
 author: Abhijit Dasgupta
 date: "`r format(Sys.time(), '%d %b, %Y %I:%M %p')`"
 output_format: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r preamble, include = F}
-knitr::opts_chunk$set(warning = F, message = F, echo = F)
+knitr::opts_chunk$set(warning = F, message = F, echo = F, cache=TRUE)
 library(tidyverse)
 library(fs)
 library(kableExtra)
@@ -66,44 +68,59 @@ The crude rate for TKA is `r round(1000*sum(smr_white$total_knee)/sum(smr_white$
 
 ### Figure 2
 
-```{r}
-library(Hmisc)
-library(patchwork)
+Correlation of various HRR-based summary measures with SMR along with bootstrap (n=5000)-based confidence intervals 
 
-smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv'))
+```{r}
+library(mosaic)
+
+smr_white <- import(path(data_dir, 'raw/PROJ4_SMR_WHITE.csv'))
 
 dat <- smr_white %>% select(hrr, smr3, mean_op, rural_perc:mean_koa_visits, frac_koa) %>% 
-  gather(metric, frac, -smr3, -hrr) %>% as_tibble()
+  as_tibble()
 
-dat %>% group_by(metric) %>% summarize(corr_coef = cor(smr3, frac, method='spearman'))
-label(smr_white$rural_perc) <- 'Percent rural\n'
-label(smr_white$mean_op) <- 'Average number of \noutpatient visits per year'
-label(smr_white$mcare_adv_wtperc) <- 'Percentage with \nMedicare Managed Care'
-label(smr_white$ortho_per_100000) <- 'Number of TKA surgeons\nper 100,000 beneficiaries'
-label(smr_white$mean_koa_visits) <- 'Mean annual knee visits\n per person'
-label(smr_white$frac_koa) <- 'Fraction of people with \nat least one knee visit a year'
-plot_fn <- function(variable){
-  vrbl <- enquo(variable)
-  ggplot(smr_white, aes(x = !!vrbl, y = smr3))+
-    geom_point()+
-    geom_smooth(se = F, color = 'red') +
-    geom_hline(yintercept = 1, linetype = 2) +
-    labs(x = label(smr_white[[ensym(vrbl)]]),
-         y = 'Observed/Expected ratio (OER)') +
-    theme_bw() +
-    theme(axis.text = element_text(size = 12),
-          axis.title = element_text(size = 12, face = 'bold'),
-          axis.title.y = element_blank())
-}
+cor_obs <- dat %>%
+  pivot_longer(cols = mean_op:frac_koa, names_to="metric", values_to="frac") %>% 
+  group_by(metric) %>% 
+  summarize(corr_coef = cor(smr3, frac, method='spearman'))
 
+set.seed(20294)
+set.rseed(20294)
+boot_samples <- do(5000, parallel=FALSE)*(resample(dat) %>% 
+                           pivot_longer(cols=mean_op:frac_koa, names_to='metric',
+                                        values_to='frac') %>% 
+                           group_by(metric) %>% 
+                           summarize(corr_coef = cor(smr3, frac,
+                                                     method='spearman')) %>% 
+                           ungroup())
+cor_boot <- boot_samples %>% 
+  group_by(metric) %>% 
+  summarize(lcb = quantile(corr_coef, 0.025),
+            ucb = quantile(corr_coef, 0.975))
 
+labs <- c(
+  'rural_perc' = 'Percent rural',
+  'mean_op' = 'Average number of outpatient visits per year',
+  'mcare_adv_wtperc' = 'Percentage with Medicare Managed Care',
+  'ortho_per_100000' = 'Number of TKA surgeons per 100,000 beneficiaries',
+  'mean_koa_visits' = 'Mean annual knee visits per person',
+  'frac_koa' = 'Fraction of people with at least one knee visit a year'
+)
+out <- cor_obs %>% left_join(cor_boot) %>% 
+  mutate_at(vars(corr_coef:ucb), round, 3) %>% 
+  mutate(metric = labs[metric]) %>% 
+  slice(c(6,3, 4, 2, 5))
+kable(out, 
+      col.names = c('Measure', 'Correlation','LCB','UCB')) %>% 
+  kable_styling(full_width = TRUE)
 ```
 
 ### Figure 4
 
 We computed the Spearman correlation coefficient between the prevalences and the corresponding SMRs and computed a 95% confidence interval using 5000 bootstrap samples. The results are below.
 
-```{r}
+```{r, eval=T}
+library(mosaic)
+
 drop_dir <- data_dir
 conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
 depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
@@ -125,32 +142,40 @@ conditions <- conditions %>%
                                 # 'Congestive\nHeart Failure' = 'chf'
                                 )) 
 
-corr_obs <- conditions %>% group_by(condition) %>% 
-  summarize(corr_coef = cor(prop, smr3, method='spearman')) %>% ungroup()
-set.seed(295789)
-indx <- (do(5000)*resample(conditions %>% select(hrr) %>% distinct())) %>% 
-  group_split(.index)
-corr_boot = map_dfr(indx, ~conditions %>% filter(hrr %in% .$hrr) %>% group_by(condition) %>% summarize(corr_coef = cor(smr3, prop, method='spearman')))
-corr_boot <- do(5000) * (resample(conditions) %>% group_by(condition) %>% 
-                           summarize(corr_coef=cor(prop, smr3, method='spearman')))
-boot_ci <- corr_boot %>% group_by(condition) %>% summarize(lcb = quantile(corr_coef, 0.025),
-                                                           ucb = quantile(corr_coef, 0.975)) %>% 
-  ungroup()
-out = left_join(corr_obs, boot_ci) %>% 
-  mutate_at(vars(-condition), round, 3) %>% 
-  rename("Condition" = 'condition', "Spearman correlation" = 'corr_coef', 'LCB'='lcb','UCB'='ucb')
-kable(out, align='lccc')
+d <- conditions %>% select(hrr, smr3, prop, condition) %>% 
+  pivot_wider(id_cols = hrr:smr3, names_from='condition', 
+              values_from = 'prop')
 
-# ggplot(conditions, aes(x = prop, y = smr3)) + 
-#   geom_point() + 
-#   geom_smooth(se = F, color = 'red') + 
-#   geom_hline(yintercept = 1, linetype = 2) +
-#   facet_wrap(~ condition, nrow=3, ncol = 3, scales = 'free_x') +
-#   scale_x_continuous(breaks = seq(10, 60, by = 10))+
-#   labs( x = 'Incidence of TKA per 1000 among those with condition', 
-#         y = 'Observed/Expected Ratio (OER)') + 
-#   theme(text = element_text(size = 14),
-#         strip.text = element_text(size = 10))
+corr_obs <- d %>% 
+  pivot_longer(Dementia:Depression, names_to = 'condition', values_to = 'prop') %>% 
+  group_by(condition) %>% 
+  summarize(corr_coef = cor(smr3, prop, method = 'spearman')) %>% 
+  ungroup()
+
+set.seed(295789)
+boot_samples <- do(5000, parallel=FALSE)*
+  (resample(d) %>% 
+     pivot_longer(cols = Dementia:Depression, 
+                  names_to = 'condition',
+                  values_to = 'prop') %>% 
+     group_by(condition) %>% 
+     summarize(corr_coef = cor(smr3, prop, method='spearman')) %>% 
+     ungroup())
+
+cor_boot <- boot_samples %>% 
+  group_by(condition) %>% 
+  summarize(lcb = quantile(corr_coef, 0.025),
+            ucb = quantile(corr_coef, 0.975)) %>% 
+  ungroup()
+out <-  left_join(corr_obs, cor_boot) %>% 
+  mutate_at(vars(-condition), round, 3) %>% 
+  rename("Condition" = 'condition', 
+         "Spearman correlation" = 'corr_coef', 
+         'LCB'='lcb',
+         'UCB'='ucb') %>% 
+  slice(c(2,7, 6, 1, 3, 4, 5))
+kable(out, align='lccc') %>% 
+  kable_styling(full_width = T)
 
 ```
 

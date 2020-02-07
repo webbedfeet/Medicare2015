@@ -9,3 +9,4 @@ outputs/*
 data/*
 docs/Result_Graphs/*
 docs/Supplement_cache/*
+docs/*_cache/*
