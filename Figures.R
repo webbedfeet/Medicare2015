@@ -7,8 +7,8 @@ library(here)
 
 knitr::opts_chunk$set(echo = FALSE, warning = F, message = F, cache = F,
                       fig.path = 'Result_Graphs/', dev = c('png','pdf'),
-                      dpi = 300, 
-                      # fig.align = 'center', 
+                      dpi = 300,
+                      # fig.align = 'center',
                       fig.height = 5, fig.width = 7)
 
 theme_set(theme_bw() + theme(
@@ -17,7 +17,6 @@ theme_set(theme_bw() + theme(
 
 doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
 
-# drop_dir <- path(ProjTemplate::find_dropbox(), 'NIAMS','Ward','Medicare2015')
 drop_dir <- path('P:/','Work','Ward','Studies','Medicare2015','data')
 print(doc.type)
 
@@ -50,14 +49,14 @@ map_scale_color <- function(...){
 
 smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv') )
 hrr_info <- st_read(path(drop_dir, 'HRR_Bdry.SHP'), quiet = TRUE)
-plot_dat <- smr_white %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>% 
-  # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>% 
+plot_dat <- smr_white %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>%
+  # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>%
   # mutate(SMR1 = ifelse(SMR1 >= 1.5, 1.5, SMR1))
 
 
-plt11 <- 
+plt11 <-
   ggplot(plot_dat) +
-  geom_sf(aes(geometry = geometry, fill = smr3),  color = NA) + 
+  geom_sf(aes(geometry = geometry, fill = smr3),  color = NA) +
   map_scale_fill(breaks = c(min(plot_dat$smr3),  1, max(plot_dat$smr3)))+
   # scale_fill_gradient2(
   #   name = 'OER',
@@ -69,14 +68,14 @@ plt11 <-
   coord_sf(label_graticule = 'SW', crs = 4286)
 
 plt12 <- ggplotGrob(
-  plt11 + coord_sf(xlim = c(-76,-71.5), ylim = c(39.5,42), crs=4286) + 
+  plt11 + coord_sf(xlim = c(-76,-71.5), ylim = c(39.5,42), crs=4286) +
   theme(legend.position = 'none',
         axis.text = element_blank() , axis.ticks = element_blank())
 )
 
-plt13 <- plt11 + 
-  
-  annotation_custom(grob = plt12, xmin =-78.8, xmax = -63.8, ymin = 22.5, 
+plt13 <- plt11 +
+
+  annotation_custom(grob = plt12, xmin =-78.8, xmax = -63.8, ymin = 22.5,
                     ymax = 32.5) +
   annotate('rect', xmax = -71.5, xmin = -76, ymax = 42, ymin = 39.5,
            alpha = 0.3)
@@ -123,9 +122,9 @@ p4 <- plot_fn(mean_koa_visits)
 p5 <- plot_fn(frac_koa) + scale_x_continuous(labels=scales::percent_format())
 
 plt <- ggpubr::ggarrange(p0, p4, p1, p2, p3, ncol = 3, nrow = 2)
-# plt <- ggpubr::ggarrange(p4,p0,p2,p3, ncol = 2, nrow = 2) 
-(final_plt <- ggpubr::annotate_figure(plt, 
-    left = ggpubr::text_grob('Observed/Expected ratio (OER)', 
+# plt <- ggpubr::ggarrange(p4,p0,p2,p3, ncol = 2, nrow = 2)
+(final_plt <- ggpubr::annotate_figure(plt,
+    left = ggpubr::text_grob('Observed/Expected ratio (OER)',
                              rot = 90, size = 12, face = 'bold'))
 )
 
@@ -134,42 +133,42 @@ plt <- ggpubr::ggarrange(p0, p4, p1, p2, p3, ncol = 3, nrow = 2)
 ## ----Figure-3--------------------------------------------------------------
 quarts <- rio::import(path(drop_dir, 'raw/PROJ4_MOD3_HRR_QUARTILES.csv')) %>% as_tibble() %>%
   mutate(smr = tka/exp3) %>% select(hrr, smr, quartile)
-smr_white <- rio::import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv')) %>% 
-  select(hrr, smr3) %>% 
-  mutate(quartile = 'Overall') %>% 
-  mutate(smr_group = cut(smr3, quantile(smr3, c(0,0.05,0.4, 0.6, 0.95, 1)), 
+smr_white <- rio::import(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv')) %>%
+  select(hrr, smr3) %>%
+  mutate(quartile = 'Overall') %>%
+  mutate(smr_group = cut(smr3, quantile(smr3, c(0,0.05,0.4, 0.6, 0.95, 1)),
                          include.lowest = T))
-levels(smr_white$smr_group) <- str_split(levels(smr_white$smr_group), ',') %>% 
-  map(~str_replace(., '\\(|\\)|\\[|\\]','')) %>% 
-  map(as.numeric) %>% 
-  map(~paste(round(., 2), collapse = '-')) %>% 
+levels(smr_white$smr_group) <- str_split(levels(smr_white$smr_group), ',') %>%
+  map(~str_replace(., '\\(|\\)|\\[|\\]','')) %>%
+  map(as.numeric) %>%
+  map(~paste(round(., 2), collapse = '-')) %>%
   unlist()
 levels(smr_white$smr_group) <- paste(c('Very low','Low','Middle','High',
-                                       'Very high'), 
+                                       'Very high'),
                                      levels(smr_white$smr_group),
                                      sep = ': ')
 
-blah <- quarts %>% bind_rows(smr_white %>% 
-                               select(-smr_group) %>% 
-                               rename(smr = smr3)) %>% 
+blah <- quarts %>% bind_rows(smr_white %>%
+                               select(-smr_group) %>%
+                               rename(smr = smr3)) %>%
   filter(!is.na(smr)) # Adding the overall SMR values to the dataset
-blah <- blah %>% 
-  left_join(smr_white %>% 
+blah <- blah %>%
+  left_join(smr_white %>%
               select(hrr, smr_group)) %>%  # Adding the SMR groups to the dataset
-  mutate(quartile = as_factor(quartile)) %>% 
+  mutate(quartile = as_factor(quartile)) %>%
   mutate(quartile = fct_recode(quartile,
                                "Low" = "q1",
                                "Low-middle" = "q2",
                                "High-middle" = "q3",
-                               "High" = 'q4')) %>% 
+                               "High" = 'q4')) %>%
   mutate(quartile = fct_relevel(quartile, 'Low','Low-middle', 'High-middle',
                                 'High','Overall'))
-blah2 <- blah %>% filter(quartile=='Overall') %>% 
-  select(hrr, smr) %>% 
+blah2 <- blah %>% filter(quartile=='Overall') %>%
+  select(hrr, smr) %>%
   rename(smr_overall=smr)
 blah <- blah %>% left_join(blah2)
 plt <- ggplot(blah, aes(x = quartile,y = smr, color = smr_overall)) +
-  geom_line(aes(group = hrr), alpha = 0.2) + 
+  geom_line(aes(group = hrr), alpha = 0.2) +
   geom_point() +
   scale_y_log10()+
   map_scale_color(breaks = c(min(blah$smr_overall),  1, max(blah$smr_overall)))+
@@ -185,14 +184,14 @@ plt
 
 ## ----Figure-4--------------------------------------------------------------
 conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
-depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
+depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>%
   mutate(condition='depression') %>% mutate(prop = prop*1000)
 conditions <- bind_rows(conditions,depr)
-conditions <- conditions %>% 
-  filter(condition %in% c('dementia','ulcers','pvd','chf','depression','diabetes','healthy')) %>% 
-  mutate(condition = as.factor(condition)) %>% 
-  mutate(condition = fct_relevel(condition, 'dementia','ulcers','pvd','chf','depression','diabetes','healthy')) %>% 
-  mutate(condition = fct_recode(condition, 
+conditions <- conditions %>%
+  filter(condition %in% c('dementia','ulcers','pvd','chf','depression','diabetes','healthy')) %>%
+  mutate(condition = as.factor(condition)) %>%
+  mutate(condition = fct_relevel(condition, 'dementia','ulcers','pvd','chf','depression','diabetes','healthy')) %>%
+  mutate(condition = fct_recode(condition,
                                 'Dementia' = 'dementia',
                                 'Peripheral vascular disease' = 'pvd',
                                 'Skin ulcers' = 'ulcers',
@@ -202,15 +201,15 @@ conditions <- conditions %>%
                                 'No comorbidity' = 'healthy',
                                 # 'Depression' = 'depression',
                                 # 'Congestive\nHeart Failure' = 'chf'
-                                )) 
-ggplot(conditions, aes(x = prop, y = smr3)) + 
-  geom_point() + 
-  geom_smooth(se = F, color = 'red') + 
+                                ))
+ggplot(conditions, aes(x = prop, y = smr3)) +
+  geom_point() +
+  geom_smooth(se = F, color = 'red') +
   geom_hline(yintercept = 1, linetype = 2) +
   facet_wrap(~ condition, nrow=3, ncol = 3, scales = 'free_x') +
   scale_x_continuous(breaks = seq(10, 60, by = 10))+
-  labs( x = 'Incidence of TKA per 1000 among those with condition', 
-        y = 'Observed/Expected Ratio (OER)') + 
+  labs( x = 'Incidence of TKA per 1000 among those with condition',
+        y = 'Observed/Expected Ratio (OER)') +
   theme(text = element_text(size = 14),
         strip.text = element_text(size = 10))
 
@@ -245,24 +244,24 @@ ggplot(conditions, aes(x = prop, y = smr3)) +
 
 
 ## ----Figure-5--------------------------------------------------------------
-smr_black <- read_csv(path(drop_dir,'raw/Black_SMR.csv')) %>% 
+smr_black <- read_csv(path(drop_dir,'raw/Black_SMR.csv')) %>%
   filter(n >= 15000)
 smr_white <- read_csv(path(drop_dir,'raw/PROJ4_SMR_WHITE.csv'))
 
-smrs <- bind_rows(smr_white, smr_black) %>% 
+smrs <- bind_rows(smr_white, smr_black) %>%
   mutate(race = ifelse(race == 1, 'White','Black')) %>%
-  mutate(race = as_factor(race)) %>% 
-  # mutate(race = fct_relevel('White')) %>% 
+  mutate(race = as_factor(race)) %>%
+  # mutate(race = fct_relevel('White')) %>%
   select(hrr, race, smr3, ortho_per_100000)
 
-smrs %>% select(-ortho_per_100000) %>% 
-  spread(race, smr3) %>% 
-  ggplot(aes(White, Black)) + 
-  geom_point() + 
-  # geom_smooth(se=F, color = 'red', method = 'lm') + 
-  geom_abline(linetype = 2) + 
-  coord_equal(xlim = c(0.6, 1.3), ylim = c(0.6, 1.3)) + 
-  theme_bw() + 
+smrs %>% select(-ortho_per_100000) %>%
+  spread(race, smr3) %>%
+  ggplot(aes(White, Black)) +
+  geom_point() +
+  # geom_smooth(se=F, color = 'red', method = 'lm') +
+  geom_abline(linetype = 2) +
+  coord_equal(xlim = c(0.6, 1.3), ylim = c(0.6, 1.3)) +
+  theme_bw() +
   theme(text = element_text(size = 12),
         axis.title = element_text(face = 'bold'))
 
@@ -278,42 +277,42 @@ smrs %>% select(-ortho_per_100000) %>%
 
 
 ## ----Figure-7, echo = TRUE-------------------------------------------------
-overall_smr <- 
-  rio::import(path(drop_dir,'raw','PROJ4_OVERALL_SMR.csv')) %>% 
+overall_smr <-
+  rio::import(path(drop_dir,'raw','PROJ4_OVERALL_SMR.csv')) %>%
   select(hrr, SMR3)
 dat_n <- rio::import(path(drop_dir, 'N_2013.csv'))
 yrs <- 2011:2015
 dat <- list()
 for(yr in yrs){
-  dat[[as.character(yr)]] <- 
-    rio::import(path(drop_dir,                                               paste0('PROJ4_HRR_MODSUMMARY_',yr,'.csv'))) %>% 
-    group_by(hrr) %>% 
-    dplyr::summarize(obs= sum(total_knee), 
-              expect = sum(expected_knee3)) %>% 
-    mutate(oer = obs/expect) %>% 
-    ungroup() %>% 
-    select(hrr, oer) %>% 
+  dat[[as.character(yr)]] <-
+    rio::import(path(drop_dir,                                               paste0('PROJ4_HRR_MODSUMMARY_',yr,'.csv'))) %>%
+    group_by(hrr) %>%
+    dplyr::summarize(obs= sum(total_knee),
+              expect = sum(expected_knee3)) %>%
+    mutate(oer = obs/expect) %>%
+    ungroup() %>%
+    select(hrr, oer) %>%
     left_join(dat_n)
 }
-Dat <- bind_rows(dat, .id = 'year') %>% 
-  group_by(hrr) %>% 
-  dplyr::summarize(N = unique(N), 
+Dat <- bind_rows(dat, .id = 'year') %>%
+  group_by(hrr) %>%
+  dplyr::summarize(N = unique(N),
             maxoer = max(oer),
             minoer = min(oer),
-            rangeoer = maxoer - minoer) %>% 
-  ungroup() %>% 
+            rangeoer = maxoer - minoer) %>%
+  ungroup() %>%
   left_join(overall_smr)
 
 library(scales)
-p1 <- ggplot(Dat %>% filter(N <= 100000), aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) + 
+p1 <- ggplot(Dat %>% filter(N <= 100000), aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) +
   geom_pointrange(size = 0.5) +
   scale_y_log10(breaks = c(0.7, 1, 2), limits = c(0.5, 2.05)) + scale_x_continuous(labels = comma) +
-  labs(x = 'Population in Medicare', 
+  labs(x = 'Population in Medicare',
        y = 'Observed/Expected Ratio')
-p2 <- ggplot(Dat %>% filter(N > 100000), aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) + 
-  geom_pointrange(size = 0.5) + 
+p2 <- ggplot(Dat %>% filter(N > 100000), aes(x = N, y = SMR3, ymin = minoer, ymax = maxoer)) +
+  geom_pointrange(size = 0.5) +
   scale_y_log10(breaks = c(0.7, 1, 2), limits = c(0.5, 2.05)) + scale_x_continuous(labels = comma) +
-  labs(x = 'Population in Medicare', 
+  labs(x = 'Population in Medicare',
        y = 'Observed/Expected Ratio')
 cowplot::plot_grid(p1, p2, nrow = 2, ncol = 1)
 

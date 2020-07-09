@@ -1,12 +1,12 @@
 library(readxl)
 library(tidyverse)
 library(sf)
+library(fs)
 library(plotly)
 library(openxlsx)
-library(ProjTemplate)
 library(here)
 
-datadir <- fs::path(find_dropbox(),'NIAMS','Ward','Medicare2015')
+datadir <- fs::path('P:/','Work','Ward','Medicare2015')
 
 # LowHigh.xlsx was hand-curated from the SAS analysis
 

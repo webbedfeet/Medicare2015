@@ -22,7 +22,7 @@ theme_set(theme_bw() + theme(
   axis.title = element_text(size = 10, face = 'bold')))
 doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
 
-drop_dir <- path(ProjTemplate::find_dropbox(), 'NIAMS','Ward','Medicare2015')
+drop_dir <- path(abhiR::find_dropbox(), 'NIAMS','Ward','Medicare2015')
 print(doc.type)
 
 map_scale_fill <- function(...){
@@ -561,7 +561,7 @@ ggplot(blah2, aes(smr3, perc, color = group)) + geom_point() + geom_smooth(se = 
 
 
 ```{r post, inlcude=F, message=F, results = 'hide'}
-ProjTemplate::pdf2tiff(here::here('docs','Result_Graphs'))
+abhiR::pdf2tiff(here::here('docs','Result_Graphs'))
 ```
 
 

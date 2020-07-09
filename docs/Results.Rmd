@@ -27,7 +27,6 @@ theme_set(theme_bw() + theme(
 doc.type <- knitr::opts_knit$get('rmarkdown.pandoc.to')
 
 library(fs)
-#drop_dir <- path(ProjTemplate::find_dropbox(), 'NIAMS','Ward','Medicare2015')
 drop_dir <- path('P:/','Work','Ward','Studies','Medicare2015','data')
 print(doc.type)
 ```

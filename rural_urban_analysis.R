@@ -7,7 +7,7 @@
 #+ include = F
 library(tidyverse)
 library(fs)
-drop_dir <- path(ProjTemplate::find_dropbox(), 'NIAMS','Ward','Medicare2015')
+drop_dir <- path("P:/", 'Work','Ward','Medicare2015')
 #'
 #+ echo = F, message = F
 d <- read_csv(path(drop_dir, 'raw/PROJ4_SMR_RURAL_URBAN.csv'))
