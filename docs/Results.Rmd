@@ -144,10 +144,10 @@ The Hawaii HRR information
 ```{r hawaii}
 library(tidyverse)
 library(rio)
-data_dir <- fs::path(ProjTemplate::find_dropbox(), 'NIAMS','Ward','Medicare2015')
-smr_white <- import('../data/raw/PROJ4_SMR_WHITE.csv')
-smr_overall <- import('../data/raw/PROJ4_OVERALL_SMR.csv')
-hrr_info <- sf::st_read(fs::path(data_dir, 'HRR_Bdry.SHP'), quiet = TRUE)
+data_dir <- fs::path('P:/','Work','Ward','Studies','Medicare2015')
+smr_white <- import(path(data_dir, 'data/raw/PROJ4_SMR_WHITE.csv'))
+smr_overall <- import(path(data_dir, 'data/raw/PROJ4_OVERALL_SMR.csv'))
+hrr_info <- sf::st_read(fs::path(data_dir, 'data','HRR_Bdry.SHP'), quiet = TRUE)
 
 smr_hawaii <- smr_overall %>% left_join(hrr_info, by = c('hrr'='HRRNUM')) %>% 
   select(hrr, HRRCITY, SMR1, SMR3) %>% 
