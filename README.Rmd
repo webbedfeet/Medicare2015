@@ -1,0 +1,78 @@
+---
+title: Regional variations in rates of total knee arthroplasty among Medicare beneficiaries
+author: Michael M Ward and Abhijit Dasgupta
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+This repository contains R code for some analyses and figure generation for our paper  looking at regional variations
+in the rates of total knee arthroplasty across the United States among Medicare beneficiaries.
+
+The paper is now published:
+
+Ward, M. M., & Dasgupta, A. (2020). Regional Variation in Rates of Total Knee Arthroplasty Among Medicare Beneficiaries. JAMA network open, **3(4)**, e203717. [link](https://doi.org/10.1001/jamanetworkopen.2020.3717)
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = F, message = F, cache = F,
+                      fig.path = 'Result_Graphs/', dev = c('png','pdf'),
+                      dpi = 300, 
+                      # fig.align = 'center', 
+                      fig.height = 5, fig.width = 7)
+
+library(pacman)
+p_load(char = c('tidyverse','sf','here','fs','rio'))
+drop_dir <- path('P:/','Work','Ward','Studies','Medicare2015','data')
+theme_set(theme_bw() + theme(
+  text = element_text(size = 10),
+  axis.title = element_text(size = 10, face = 'bold')))
+map_scale_fill <- function(...){
+  scale_fill_gradient2(
+  name = 'OER',
+  trans = 'log2',
+  labels = function(x){round(x,2)},
+  high = '#ff0000',
+  low = '#003300',
+  mid = '#ffff00',
+  midpoint = 0,
+  ...)
+}
+smr_white <- import(path(drop_dir, 'raw/PROJ4_SMR_WHITE.csv') )
+hrr_info <- st_read(path(drop_dir, 'HRR_Bdry.SHP'), quiet = TRUE)
+plot_dat <- smr_white %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>% 
+  # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>% 
+  # mutate(SMR1 = ifelse(SMR1 >= 1.5, 1.5, SMR1))
+```
+```{r, echo=FALSE}
+plt11 <- 
+  ggplot(plot_dat) +
+  geom_sf(aes(geometry = geometry, fill = smr3),  color = NA) + 
+  map_scale_fill(breaks = c(min(plot_dat$smr3),  1, max(plot_dat$smr3)))+
+  # scale_fill_gradient2(
+  #   name = 'OER',
+  #   trans = 'log2',
+  #   breaks = c(min(plot_dat$SMR3), 0.75, 1, 1.33, max(plot_dat$SMR3)),
+  #   labels = function(x){round(x,2)},
+  #   # limits = c(0.67, 1.5),
+  #    high = 'red', mid = '#ffffbf', low = 'green', midpoint = 0) +
+  coord_sf(label_graticule = 'SW', crs = 4286)
+
+plt12 <- ggplotGrob(
+  plt11 + coord_sf(xlim = c(-76,-71.5), ylim = c(39.5,42), crs=4286) + 
+  theme(legend.position = 'none',
+        axis.text = element_blank() , axis.ticks = element_blank())
+)
+
+plt13 <- plt11 + 
+  
+  annotation_custom(grob = plt12, xmin =-78.8, xmax = -63.8, ymin = 22.5, 
+                    ymax = 32.5) +
+  annotate('rect', xmax = -71.5, xmin = -76, ymax = 42, ymin = 39.5,
+           alpha = 0.3)
+print(plt13)
+```
