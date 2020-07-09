@@ -1,6 +1,12 @@
+
+# setup -------------------------------------------------------------------
+
 library(tidyverse)
 library(rio)
 library(sf)
+library(fs)
+
+# Ingest data -------------------------------------------------------------
 
 smr_overall <- import('data/raw/PROJ4_OVERALL_SMR.csv')
 hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP', quiet = TRUE)
