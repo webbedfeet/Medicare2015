@@ -88,11 +88,7 @@ plt13 <- plt11 +
 
 pdffile <- fs::path_rel(here::here('docs','Result_Graphs','Figure-1-1-quintile.pdf'))
 ggsave(pdffile, plot = plt11)
+ggsave(str_replace(pdffile, 'pdf','tiff'), plot = plt11, compression='lzw', dpi = 600)
 # x <- magick::image_read_pdf(pdffile)
 # magick::image_write(x, stringr::str_replace(pdffile, 'pdf','png'))
-
-pdftools::pdf_convert(pdffile, format='png',
-                      filenames = str_replace(pdffile, 'pdf','png'), dpi=300)
-pdftools::pdf_convert(pdffile, format = 'tiff',
-                      filenames = str_replace(pdffile,'pdf','tiff'), dpi=300)
 
