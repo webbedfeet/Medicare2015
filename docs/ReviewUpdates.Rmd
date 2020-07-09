@@ -8,7 +8,11 @@ editor_options:
 ---
 
 ```{r preamble, include = F}
-knitr::opts_chunk$set(warning = F, message = F, echo = F, cache=TRUE)
+knitr::opts_chunk$set(echo = FALSE, warning = F, message = F, cache = F,
+                      fig.path = 'Result_Graphs/', dev = c('png','pdf'),
+                      dpi = 300, 
+                      # fig.align = 'center', 
+                      fig.height = 5, fig.width = 7)
 library(tidyverse)
 library(fs)
 library(kableExtra)
@@ -29,7 +33,7 @@ if(Sys.info()['sysname']=='Windows'){
 
 > For whites only, need number of beneficiaries and number of TKA, by year and overall.  Among these, need descriptives for age and sex by year and overall, and percent with knee osteoarthritis or knee symptoms. Also crude rate of TKA overall among whites. (E-mail, 2/4/2020 1:43 PM)
 
-```{r, eval=F}
+```{r ReviewUpdates-1, eval=F}
 whites_tka <- import(path(data_dir,'raw','TKAS_WHITE2.csv')) %>% 
   select(BENE_ENROLLMT_REF_YR, tka, n) %>%
   # janitor::adorn_totals('row') %>% 
@@ -43,7 +47,7 @@ kable(whites_tka, align='lcc',
 #                caption = "Table 1: Number of TKA and number of beneficiaries among whites by year")
 ```
 
-```{r}
+```{r ReviewUpdates-2}
 whites <- import(path('P:/', 'Work','Ward','Studies','Medicare2015','docs','revision_updates.xlsx'), 
                  n_max = 6) %>% 
   mutate(fraction_male = 100*(1-fraction_male)) %>% 
@@ -55,7 +59,7 @@ kable(whites, align = 'lcccccc',caption = "Table 1: TKA, benficiaries, age, sex 
   kable_styling(full_width=T)
 ```
 
-```{r}
+```{r ReviewUpdates-3}
 smr_white <- import(path(data_dir, 'raw', 'PROJ4_SMR_WHITE.csv'))
 ```
 
@@ -70,7 +74,7 @@ The crude rate for TKA is `r round(1000*sum(smr_white$total_knee)/sum(smr_white$
 
 Correlation of various HRR-based summary measures with SMR along with bootstrap (n=5000)-based confidence intervals 
 
-```{r}
+```{r ReviewUpdates-4, eval = F}
 library(mosaic)
 
 smr_white <- import(path(data_dir, 'raw/PROJ4_SMR_WHITE.csv'))
@@ -118,7 +122,7 @@ kable(out,
 
 We computed the Spearman correlation coefficient between the prevalences and the corresponding SMRs and computed a 95% confidence interval using 5000 bootstrap samples. The results are below.
 
-```{r, eval=T}
+```{r ReviewUpdates-5, eval=F}
 library(mosaic)
 
 drop_dir <- data_dir
@@ -176,6 +180,60 @@ out <-  left_join(corr_obs, cor_boot) %>%
   slice(c(2,7, 6, 1, 3, 4, 5))
 kable(out, align='lccc') %>% 
   kable_styling(full_width = T)
+
+```
+
+
+```{r Figure-4-update}
+drop_dir <- data_dir
+conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
+depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
+  mutate(condition='depression') %>% mutate(prop = prop*1000)
+conditions <- bind_rows(conditions,depr)
+conditions <- conditions %>% 
+  filter(condition %in% c('dementia','ulcers','pvd','chf','depression','diabetes')) %>% 
+  mutate(condition = as.factor(condition)) %>% 
+  mutate(condition = fct_relevel(condition, 'dementia','ulcers','pvd','chf','depression','diabetes')) %>% 
+  mutate(condition = fct_recode(condition, 
+                                'Dementia' = 'dementia',
+                                'Peripheral vascular disease' = 'pvd',
+                                'Skin ulcers' = 'ulcers',
+                                'Congestive heart failure' = 'chf',
+                                'Depression' = 'depression',
+                                'Diabetes Mellitus' = 'diabetes',
+                                # 'No comorbidity' = 'healthy',
+                                # 'Depression' = 'depression',
+                                # 'Congestive\nHeart Failure' = 'chf'
+                                )) 
+ggplot(conditions, aes(x = prop, y = smr3)) + 
+  geom_point() + 
+  geom_smooth(se = F, color = 'red') + 
+  geom_hline(yintercept = 1, linetype = 2) +
+  facet_wrap(~ condition, nrow=3, ncol = 3, scales = 'free_x') +
+  scale_x_continuous(breaks = seq(10, 60, by = 10))+
+  labs( x = 'Incidence of TKA per 1000 among those with condition', 
+        y = 'Observed/Expected Ratio (OER)') + 
+  theme(text = element_text(size = 14),
+        strip.text = element_text(size = 10))
+
+```
+
+```{r Fig4-suppl}
+conditions <- import(path(drop_dir, 'raw/PROJ4_TKA_CONDITIONS_june2.csv'))
+depr <- import(path(drop_dir, 'raw/PROJ4_TKA_DEPRESSION.csv')) %>% 
+  mutate(condition='depression') %>% mutate(prop = prop*1000)
+conditions <- bind_rows(conditions,depr)
+conditions <- conditions %>% filter(condition=='healthy')
+ggplot(conditions, aes(x = prop, y = smr3))+
+  geom_point()+
+  geom_smooth(se = F, color = 'red') + 
+  geom_hline(yintercept = 1, linetype = 2) +
+  scale_x_continuous(breaks = seq(10, 60, by = 10))+
+  labs( x = 'Incidence of TKA per 1000 among those with condition', 
+        y = 'Observed/Expected Ratio (OER)',
+        title = 'No comorbidity') + 
+  theme(text = element_text(size = 14),
+        strip.text = element_text(size = 10))
 
 ```
 
