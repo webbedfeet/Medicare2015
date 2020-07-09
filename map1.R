@@ -8,14 +8,18 @@ library(fs)
 
 # Ingest data -------------------------------------------------------------
 
-smr_overall <- import('data/raw/PROJ4_OVERALL_SMR.csv')
-hrr_info <- st_read('~/Downloads/hrr_bdry-1/HRR_Bdry.SHP', quiet = TRUE)
-plot_dat <- smr_overall %>% left_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>%
+data_dir <- path('P:/','Work','Ward','Studies','Medicare2015','data')
+dir_exists(data_dir)
+
+hrr_info <- st_read(path(data_dir,'HRR_Bdry.SHP'), quiet=TRUE)
+smr_overall <- read_csv(path(data_dir, 'raw/PROJ4_OVERALL_SMR.csv')) %>%
+  as.data.frame()
+plot_dat <- smr_overall %>% dplyr::right_join(hrr_info, by = c('hrr' = 'HRRNUM'))# %>%
 # mutate(SMR1 = ifelse(SMR1 <= 0.67, 0.67, SMR1)) %>%
 # mutate(SMR1 = ifelse(SMR1 >= 1.5, 1.5, SMR1))
 
 plt1 <-
-  ggplot(plot_dat) +
+  ggplot(plot_dat, aes(geometry=geometry)) +
   geom_sf(aes(fill = SMR1)) +
   scale_fill_gradient2(
     name = 'OER',
@@ -32,3 +36,8 @@ plt1 <-
 
 # plt1
 ggsave('graphs/map_model1.pdf', plot = plt1)
+
+
+# Revised map using OER quintiles -----------------------------------------
+
+
