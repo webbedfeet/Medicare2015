@@ -79,26 +79,8 @@ print(plt13)
 
 -----
 
-This work was performed using `r sessioninfo::platform_info()$version` and the following additional
-packages:
+```{r, child = system.file('templates/report_env.Rmd', package = 'abhiR')}
 
-```{r}
-pacman::p_load(char=c('tidyverse','fs'))
-codefiles = fs::dir_ls(regex = 'R[md]*$', type = 'file', recurse=TRUE)
-bl <- purrr::map(codefiles, ~grep('library\\(', readLines(.x), value=TRUE)) %>% 
-  unlist() %>% 
-  unique()
-bl <- bl[stringr::str_detect(bl, '^#', negate=TRUE)]
-
-pkgs <- stringr::str_match(bl, pattern='library\\(([:alnum:]+)\\)')[,2] %>% unique()
-pacman::p_load(char=pkgs)
-
-sessioninfo::package_info(pkgs) %>% filter(attached) %>%
-  mutate(ghuser = str_match(source, 'Github \\(([:alnum:]+)')[,2]) %>%
-  mutate(package = ifelse(is.na(ghuser), package, paste(ghuser, package, sep='/'))) %>%
-  glue::glue_data("{package} ({loadedversion})") %>%
-  paste(collapse='; ') %>%
-  pander::pander()
 ```
 
-> `<username>/<packagename>` refers to a package sourced from Github, that can be installed using `remotes::install_github("<username>/<packagename>")`
+
